@@ -1,56 +1,29 @@
 /** @param {NS} ns **/
 
-import { getPortServer } from "./port-server.js";
+import { safeLoop } from "./utils.js";
 
-function remove(array, elem){
-  const index = array.indexOf(elem);
-  if (index > -1) {
-    array.splice(index, 1);
-  }
+var portNames = {
+  "telemetry" : 1,
+  "testing" : 20
 }
 
-export async function portSend(ns, channel, message){
-  var portServer = getPortServer();
-  var port = ns.getPortHandle(portServer.portNumber);
-  await port.write({
-    channel: channel,
-    message: message
-  });
+export async function portSend(ns, portName, message){
+  var portNumber = portNames[portName];
+  var port = await ns.getPortHandle(portNumber);
+  port.send(message);
 }
 
-export async function portSubscribe(ns, channel){
-  
-  var subscription = {
-    channel: channel,
-    messages: []
-  };
-  
-  var portServer = getPortServer();
-  portServer.subscriptions.push(subscription);
-  ns.tprint("Added to subscriptions: " + portServer.subscriptions);
-  
-  function tryRead(){
-    if (subscription.messages.length > 0){
-      var message = subscription.messages.pop();
-      return {
-        success: true,
-        message: message
-      };
-    } else {
-      return {
-        success: false,
-        message: null
-      };
-    }
+export async function portReceive(ns, portName){
+  var portNumber = portNames[portName];
+  var port = await ns.getPortHandle(portNumber);
+  while(port.empty()){
+    await ns.sleep(100);
   }
-  
-  function unsubscribe(){
-    remove(portServer.subscriptions, subscription);
-  }
-  
-  return {
-    tryRead,
-    unsubscribe
-  };
-  
+  return port.read();
+}
+
+export async function portTryReceive(ns, portName){
+  var portNumber = portNames[portName];
+  var port = await ns.getPortHandle(portNumber);
+  return port.read();
 }
