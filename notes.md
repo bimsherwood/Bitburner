@@ -1,33 +1,15 @@
 
-## Thief
+## VPS Purchasing
 
-Runs a basic grow/weaken/hack loop
+Script to print server price of a given size, and to purchase it.
 
-thief.js targetServer
+vps.js quote <size>
+vps.js buy <name> <size>
 
-## InstallThief
+## Port server pub/sub
 
-Nukes a host server if need be, (re-)installs a Thief on a given server, and
-starts the Thief
+Pub/sub server that multiplexes named channels
 
-install-thief.js install hostServer targetServer
-install-thief.js uninstall hostServer
+## Scan for files of interest
 
-## Thiefnet
-
-Raises or tears down the configured Thief network
-
-thiefnet.js update
-thiefnet.js uninstall
-
-## TargetScanner
-
-Crawls the internet. Limit the scan length. Identifies servers that match
-specific conditions, such as open port requirements.
-
-Keep the results in a global database.
-
-Report mode will print the targets to the log.
-
-Add a programatic interface to the scan results so that a script can nurse a
-botnet.
+Contract files, etc.

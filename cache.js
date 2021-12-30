@@ -39,9 +39,9 @@ export function Cache(ns, name){
 }
 
 function printHelp(ns){
-  ns.print("Usage:");
-  ns.print("  cache.js <cache-name> <key>");
-  ns.print("  cache.js <cache-name> <key> <value>");
+  ns.tprint("Usage:");
+  ns.tprint("  cache.js <cache-name> <key>");
+  ns.tprint("  cache.js <cache-name> <key> <value>");
 }
 
 export async function main(ns){

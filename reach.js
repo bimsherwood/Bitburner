@@ -3,7 +3,7 @@
 import { Cache } from "./cache.js";
 import { Crawler } from "./crawler.js";
 import { InstallThief } from "./install-thief.js";
-import { portPoppers, rootServer } from "root-server.js";
+import { portPoppers, rootServer } from "./root-server.js";
 import { forEachAsync } from "./utils.js";
 
 function Reach(ns, cache, crawler, install){
@@ -58,6 +58,7 @@ function Reach(ns, cache, crawler, install){
     var shouldRootServer = !server.hasRootAccess
       && await isVulnerable(server);
     if (shouldRootServer){
+      ns.tprint("Rooting server " + server.hostname);
       await rootServer(ns, server.hostname);
       server.hasRootAccess = true;
     }
@@ -68,6 +69,7 @@ function Reach(ns, cache, crawler, install){
       !alreadyInstalledOn(server) &&
       server.hostname != "home";
     if (shouldIntall){
+      ns.tprint("Installing on server " + server.hostname);
       await install(server, getTarget());
       getInfectedServers().push(server.hostname);
     }
@@ -103,10 +105,10 @@ function Reach(ns, cache, crawler, install){
 }
 
 function printHelp(ns){
-  ns.print("Usage:");
-  ns.print("  reach.js discover");
-  ns.print("  reach.js update");
-  ns.print("  reach.js new-target <target>");
+  ns.tprint("Usage:");
+  ns.tprint("  reach.js discover");
+  ns.tprint("  reach.js update");
+  ns.tprint("  reach.js new-target <target>");
 }
 
 export async function main(ns) {
@@ -126,10 +128,13 @@ export async function main(ns) {
 
   if (ns.args.length == 1 && ns.args[0] == "discover"){
     await reach.discover();
+    ns.tprint("Done.");
   } else if (ns.args.length == 1 && ns.args[0] == "update"){
     await reach.update();
+    ns.tprint("Done.");
   } else if (ns.args.length == 2 && ns.args[0] == "new-target"){
     await reach.changeTarget(ns.args[1]);
+    ns.tprint("Done.");
   } else {
     printHelp(ns);
   }

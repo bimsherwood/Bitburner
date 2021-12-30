@@ -54,9 +54,9 @@ export function InstallThief (ns){
 }
 
 function printHelp(ns){
-  ns.print("Usage:");
-  ns.print("  install-thief.js install <host> <target> <threads>");
-  ns.print("  install-thief.js uninstall <host>");
+  ns.tprint("Usage:");
+  ns.tprint("  install-thief.js install <host> <target> <threads>");
+  ns.tprint("  install-thief.js uninstall <host>");
 }
 
 function readArgs(ns){
