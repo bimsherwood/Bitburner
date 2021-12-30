@@ -20,7 +20,12 @@ export function Crawler(ns, options){
   async function analyzeServer(hostname){
     return {
       hostname,
-      hasRootAccess: await ns.hasRootAccess(hostname)
+      hasRootAccess:
+        await ns.hasRootAccess(hostname),
+      requiredHackingLevel:
+        await ns.getServerRequiredHackingLevel(hostname),
+      numPortsRequired:
+        await ns.getServerNumPortsRequired(hostname)
     };
   }
   

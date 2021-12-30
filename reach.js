@@ -3,6 +3,7 @@
 import { Cache } from "./cache.js";
 import { Crawler } from "./crawler.js";
 import { InstallThief } from "./install-thief.js";
+import { portPoppers, rootServer } from "root-server.js";
 import { forEachAsync } from "./utils.js";
 
 function Reach(ns, cache, crawler, install){
@@ -41,22 +42,43 @@ function Reach(ns, cache, crawler, install){
     
   }
   
-  function isVulnerable(server){
-    return server.hasRootAccess;
+  async function isVulnerable(server){
+    var myLevel = await ns.getHackingLevel();
+    return server.requiredHackingLevel <= myLevel
+      && server.numPortsRequired <= portPoppers(ns).length;
   }
   
   function alreadyInstalledOn(server) {
     return getInfectedServers().indexOf(server.hostname) >= 0;
   }
   
+  async function considerServer(server){
+    
+    // Root the server if we can
+    var shouldRootServer = !server.hasRootAccess
+      && await isVulnerable(server);
+    if (shouldRootServer){
+      await rootServer(ns, server.hostname);
+      server.hasRootAccess = true;
+    }
+    
+    // Install if we can
+    var shouldIntall =
+      server.hasRootAccess &&
+      !alreadyInstalledOn(server) &&
+      server.hostname != "home";
+    if (shouldIntall){
+      await install(server, getTarget());
+      getInfectedServers().push(server.hostname);
+    }
+    
+  }
+  
   async function discover(){
     await init();
     var servers = await crawler.crawl();
     await forEachAsync(servers, async function(i, e){
-      if (!alreadyInstalledOn(e) && isVulnerable(e)){
-        await install(e, getTarget());
-        getInfectedServers().push(e.hostname);
-      }
+      await considerServer(e);
     });
   }
   
@@ -84,7 +106,7 @@ function printHelp(ns){
   ns.print("Usage:");
   ns.print("  reach.js discover");
   ns.print("  reach.js update");
-  ns.print("  reach.js change-target <target>");
+  ns.print("  reach.js new-target <target>");
 }
 
 export async function main(ns) {
@@ -106,7 +128,7 @@ export async function main(ns) {
     await reach.discover();
   } else if (ns.args.length == 1 && ns.args[0] == "update"){
     await reach.update();
-  } else if (ns.args.length == 2 && ns.args[0] == "change-target"){
+  } else if (ns.args.length == 2 && ns.args[0] == "new-target"){
     await reach.changeTarget(ns.args[1]);
   } else {
     printHelp(ns);
