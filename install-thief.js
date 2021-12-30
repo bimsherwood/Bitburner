@@ -37,7 +37,9 @@ export function InstallThief (ns){
     var ramAvailable = ramMax - ramUsed;
     var threadCount = Math.floor(ramAvailable / ramRequired);
     await sendScript(host);
-    await startScript(host, target, threadCount);
+    if (threadCount > 0){
+      await startScript(host, target, threadCount);
+    }
   }
 
   async function uninstall(host) {

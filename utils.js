@@ -36,7 +36,7 @@ export async function portReceive(ns, portName){
   while(await port.empty()){
     await ns.sleep(100);
   }
-  return port.read();
+  return await port.read();
 }
 
 export async function portTryReceive(ns, portName){

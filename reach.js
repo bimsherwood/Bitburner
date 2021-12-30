@@ -21,7 +21,7 @@ function Reach(ns, cache, crawler, install){
       if (existingTarget){
         return existingTarget;
       } else {
-        return "n00dles"; // Default
+        return null;
       }
     }
     
@@ -78,10 +78,14 @@ function Reach(ns, cache, crawler, install){
   
   async function discover(){
     await init();
-    var servers = await crawler.crawl();
-    await forEachAsync(servers, async function(i, e){
-      await considerServer(e);
-    });
+    if(getTarget() != null){
+      var servers = await crawler.crawl();
+      await forEachAsync(servers, async function(i, e){
+        await considerServer(e);
+      });
+    } else {
+      ns.tprint("Please select a target.");
+    }
   }
   
   async function update(){

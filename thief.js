@@ -17,6 +17,8 @@ function Thief (ns, target) {
     } else if (money <= lastMoney && money < moneyMax) {
       await ns.grow(target);
     } else {
+      lastSecurity = security;
+      lastMoney = money;
       await ns.hack(target);
     }
   }
