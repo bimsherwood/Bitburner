@@ -34,8 +34,8 @@ function Thief (ns, target) {
 };
 
 function printHelp(ns){
-  ns.print("Usage:");
-  ns.print("  thief.js <target>");
+  ns.tprint("Usage:");
+  ns.tprint("  thief.js <target>");
 }
 
 export async function main(ns) {

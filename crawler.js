@@ -7,9 +7,6 @@ export function Crawler(ns, options){
   var resultLimit = options.resultLimit;
   var rootHost = options.rootHost;
   
-  // All the servers found
-  var allDiscoveredServers = [];
-  
   // These host names have already been scanned.
   var completeHosts = [];
   
@@ -25,7 +22,11 @@ export function Crawler(ns, options){
       requiredHackingLevel:
         await ns.getServerRequiredHackingLevel(hostname),
       numPortsRequired:
-        await ns.getServerNumPortsRequired(hostname)
+        await ns.getServerNumPortsRequired(hostname),
+      money:
+        await ns.getServerMoneyAvailable(hostname),
+      moneyMax:
+        await ns.getServerMaxMoney(hostname)
     };
   }
   
@@ -47,7 +48,6 @@ export function Crawler(ns, options){
     var alreadyScanned = completeHosts.indexOf(hostname) >= 0;
     if (!alreadyScanned){
       var server = await analyzeServer(hostname);
-      allDiscoveredServers.push(server);
       completeHosts.push(hostname);
       var siblings = await ns.scan(hostname);
       forEach(siblings, function(i, e){
@@ -63,7 +63,7 @@ export function Crawler(ns, options){
     while(await step()){
       await ns.sleep(10);
     }
-    return allDiscoveredServers;
+    return completeHosts;
   }
   
   return {

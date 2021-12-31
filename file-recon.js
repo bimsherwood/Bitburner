@@ -3,10 +3,10 @@
 import { forEach, forEachAsync } from "./utils.js";
 import { Crawler } from "./crawler.js";
 
-export async function listFiles(ns, server, pattern){
-  var files = await ns.ls(server.hostname, pattern);
+export async function listFiles(ns, hostname, pattern){
+  var files = await ns.ls(hostname, pattern);
   forEach(files, function(i, e){
-    ns.tprint(server.hostname + "/" + e);
+    ns.tprint(hostname + "/" + e);
   });
 }
 
