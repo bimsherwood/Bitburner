@@ -27,4 +27,5 @@ export async function main(ns){
   await forEachAsync(servers, async function(i, e){
     await listFiles(ns, e, pattern);
   });
+  ns.tprint("Done.");
 }

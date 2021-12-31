@@ -58,6 +58,7 @@ export function InstallThief (ns){
 function printHelp(ns){
   ns.tprint("Usage:");
   ns.tprint("  install-thief.js install <host> <target> <threads>");
+  ns.tprint("  install-thief.js install-max <host> <target>");
   ns.tprint("  install-thief.js uninstall <host>");
 }
 
@@ -79,6 +80,14 @@ function readArgs(ns){
       target: target,
       threads: threads
     };
+  } else if (command == "install-max" && argc == 3){
+    var host = ns.args[1];
+    var target = ns.args[2];
+    return {
+      mode: "install-max",
+      host: host,
+      target: target
+    };
   } else if(command == "uninstall" && argc == 2) {
     var host = ns.args[1];
     return {
@@ -98,6 +107,8 @@ export async function main(ns) {
     printHelp(ns);
   } else if(options.mode == "install"){
     await installThief.install(options.host, options.target, options.threads);
+  } else if(options.mode == "install-max"){
+    await installThief.installMax(options.host, options.target);
   } else if(options.mode == "uninstall"){
     await installThief.uninstall(options.host);
   } else {

@@ -1,4 +1,6 @@
 
-## tracert
+## Restore no-restarts for reach.js
 
-TraceRoute version of the crawler to build a path to a given server
+Restart (re-install) if --force
+Restart if server target changed (keep a cached server vs target log)
+
