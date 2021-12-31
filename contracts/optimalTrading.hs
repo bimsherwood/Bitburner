@@ -77,11 +77,17 @@ optimalTradingSequence transactionLimit history =
   history
 
 history :: History
-history = [145,7,150,79,185,111,43,125,190,161,4,196,178,97,101,56,70,93,97,115,12,84,107,160,3,22,170,126,100,172,98,37,39,167,89,13,179]
+history = [13,52,190,11,7,114,87,103,45,88,121,149,90,16,172,185,115,93,135,79,111,42,91,192,61,197]
+
+tradeLimit :: Int
+tradeLimit = 6
 
 optimalTrade :: Profit
 optimalTrade =
   fst .
   head .
-  optimalTradingSequence 7 $
+  optimalTradingSequence tradeLimit $
   history
+
+main :: IO ()
+main = print optimalTrade

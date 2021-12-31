@@ -34,3 +34,9 @@ solve str =
         str
       maxLength = fst $ head byLengthDesc
   in filter (/= '"') . show . map snd . filter ((==)maxLength . fst) $ byLengthDesc
+
+string :: String
+string = "((aa()aaa)((((a)"
+
+main :: IO ()
+main = print $ solve string

@@ -1,3 +1,4 @@
-## Use fileExists to check capabilities
 
-Check whether the executables exist to decide which port poppers are available
+## tracert
+
+TraceRoute version of the crawler to build a path to a given server

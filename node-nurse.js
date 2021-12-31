@@ -2,10 +2,10 @@
 
 function defaultOptions(){
   return {
-    maxNodes: 12,
-    maxNodeLevel: 100,
-    maxNodeRam: 128,
-    maxNodeCores: 4
+    maxNodes: 32,
+    maxNodeLevel: 120,
+    maxNodeRam: 64,
+    maxNodeCores: 16
   };
 };
 
@@ -22,7 +22,10 @@ export function NodeNurse(ns, options){
       var cost = await ns.hacknet.getPurchaseNodeCost();
       if (cost > currentFunds) break;
       var newNode = await ns.hacknet.purchaseNode();
-      if (newNode < 0) break;
+      if (newNode < 0) {
+        ns.print("Attempted node purchase failed");
+        break;
+      }
       await ns.sleep(100);
     }
   }
@@ -33,7 +36,10 @@ export function NodeNurse(ns, options){
       var cost = await getCost(nodeId, 1);
       if (cost > currentFunds) break;
       var success = await upgrade(nodeId);
-      if (!success) break;
+      if (!success) {
+        ns.print("Attempted upgrade failed");
+        break
+      };
       await ns.sleep(100);
     }
   }
@@ -88,5 +94,8 @@ export function NodeNurse(ns, options){
 
 export async function main(ns){
   var nurse = new NodeNurse(ns, defaultOptions());
-  await nurse.maintain();
+  for(;;){
+    await nurse.maintain();
+    await ns.sleep(60 * 1000);
+  }
 }

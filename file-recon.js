@@ -13,11 +13,12 @@ export async function listFiles(ns, hostname, pattern){
 export async function main(ns){
   var pattern;
   if (ns.args.length == 0){
-    pattern = ".*";
+    pattern = "";
+    ns.tprint("Searching");
   } else {
-    pattern = ns.args[0]
+    pattern = ns.args[0];
+    ns.tprint("Searching with pattern " + pattern);
   }
-  ns.tprint("Searching with pattern " + pattern);
   var crawler = new Crawler(ns, {
     resultLimit: 1000,
     rootHost: "home"

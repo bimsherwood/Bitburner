@@ -12,7 +12,7 @@ export async function safeLoop(ns, f){
 	}
 }
 
-export async function forEach(arr, f){
+export function forEach(arr, f){
   for(var i = 0; i < arr.length; i++){
     f(i, arr[i]);
   }
@@ -22,6 +22,12 @@ export async function forEachAsync(arr, f){
   for(var i = 0; i < arr.length; i++){
     await f(i, arr[i]);
   }
+}
+
+export function pushAll(destination, newElements){
+  forEach(newElements, function(i, e){
+    destination.push(e);
+  });
 }
 
 export async function portSend(ns, portName, message){

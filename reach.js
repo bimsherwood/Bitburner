@@ -26,14 +26,14 @@ function Reach(ns, crawler, install){
   }
   
   async function discover(){
+    var servers = await crawler.crawl();
+    await forEachAsync(servers, async function(i, e){
+      await maybeRootServer(e);
+    });
     var bestTargets = await findBestTargets(ns);
     if(bestTargets.length > 0){
       var target = bestTargets[0].hostname;
       ns.tprint("Targeting ", target);
-      var servers = await crawler.crawl();
-      await forEachAsync(servers, async function(i, e){
-        await maybeRootServer(e);
-      });
       await forEachAsync(servers, async function(i, e){
         await updateServer(e, target, false);
       });
