@@ -2,8 +2,8 @@
 
 function printHelp (ns){
   ns.tprint("Usage:");
-  ns.tprint("  vps.js quote <size>");
-  ns.tprint("  vps.js buy <name> <size>");
+  ns.tprint("  vps.js quote <log2(ram)>");
+  ns.tprint("  vps.js buy <name> <log2(ram)>");
 }
 
 async function quote (ns, size){
@@ -22,9 +22,9 @@ async function buy (ns, name, size){
 export async function main(ns) {
 
   if (ns.args.length == 2 && ns.args[0] == "quote"){
-    await quote(ns, ns.args[1]);
+    await quote(ns, 2**ns.args[1]);
   } else if (ns.args.length == 3 && ns.args[0] == "buy"){
-    await buy(ns, ns.args[1], ns.args[2]);
+    await buy(ns, ns.args[1], 2**ns.args[2]);
   } else {
     printHelp(ns);
   }

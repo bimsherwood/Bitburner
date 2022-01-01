@@ -7,16 +7,20 @@ async function profileServer(ns, hostname){
   return {
     hostname: hostname,
     hasRootAccess: await ns.hasRootAccess(hostname),
-    money: await ns.getServerMoneyAvailable(hostname)
+    moneyMax: await ns.getServerMaxMoney(hostname)
   }
 }
 
 function compareProfiles(profilea, profileb){
-  return profileb.money - profilea.money;
+  return profileb.moneyMax - profilea.moneyMax;
 }
 
 function hasRootAccess(server){
   return server.hasRootAccess;
+}
+
+function hasMoney(server){
+  return server.moneyMax > 0;
 }
 
 async function notMine(ns){
@@ -28,10 +32,10 @@ async function notMine(ns){
 }
 
 function printProfile(ns, profile){
-  ns.tprint(profile.hostname, ": ", profile.money);
+  ns.tprint(profile.hostname, ": ", profile.moneyMax);
 }
 
-// Lists the rooted servers in order of available money descending
+// Lists the rooted servers in order of max money descending
 export async function findBestTargets(ns){
   
   var crawler = new Crawler(ns, {
@@ -46,6 +50,7 @@ export async function findBestTargets(ns){
   });
   
   var targets = profiles
+    .filter(hasMoney)
     .filter(hasRootAccess)
     .filter(await notMine(ns))
     .sort(compareProfiles);

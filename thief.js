@@ -5,22 +5,32 @@ import { safeLoop } from "./utils.js";
 function Thief (ns, target) {
   
   var lastMoney = ns.getServerMoneyAvailable(target);
+  var maxMoney = ns.getServerMaxMoney(target) * 0.95;
+  
   var lastSecurity = ns.getServerSecurityLevel(target);
-  var securityMin = ns.getServerMinSecurityLevel(target) + 5;
-  var moneyMax = ns.getServerMaxMoney(target) * 0.75;
+  var minSecurity = ns.getServerMinSecurityLevel(target) + 1;
 
   async function heuristic(){
-    var security = ns.getServerSecurityLevel(target);
-    var money = ns.getServerMoneyAvailable(target);
-    if (security >= lastSecurity && security > securityMin) {
+    
+    var currentMoney = ns.getServerMoneyAvailable(target);
+    var targetMoney = Math.min(maxMoney, lastMoney * 1.05 + 1);
+    
+    var currentSecurity = ns.getServerSecurityLevel(target);
+    var targetSecurity = Math.max(minSecurity, lastSecurity * 0.95);
+    
+    ns.print("### Target security: ", currentSecurity, " / ", targetSecurity);
+    ns.print("### Target money: ", currentMoney, " / ", targetMoney);
+    
+    if (currentSecurity > targetSecurity) {
       await ns.weaken(target);
-    } else if (money <= lastMoney && money < moneyMax) {
+    } else if (currentMoney < targetMoney) {
       await ns.grow(target);
     } else {
-      lastSecurity = security;
-      lastMoney = money;
+      lastSecurity = currentSecurity;
+      lastMoney = currentMoney;
       await ns.hack(target);
     }
+    
   }
 
   async function run() {

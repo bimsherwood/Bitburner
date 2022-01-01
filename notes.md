@@ -1,6 +1,9 @@
 
-## Restore no-restarts for reach.js
+## Automatic VPS management
 
-Restart (re-install) if --force
-Restart if server target changed (keep a cached server vs target log)
+Decide a server size. This is the size of the largest server, unless all the
+possible servers are that size, and then the size is the next size up.
 
+If you can afford a server of the size:
+  - Sell one of the smallest servers if necessary
+  - Buy a server of the size

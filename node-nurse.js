@@ -3,7 +3,7 @@
 function defaultOptions(){
   return {
     maxNodes: 32,
-    maxNodeLevel: 120,
+    maxNodeLevel: 200,
     maxNodeRam: 64,
     maxNodeCores: 16
   };

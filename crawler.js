@@ -13,22 +13,6 @@ export function Crawler(ns, options){
   // These host names are recently discovered and
   // may not have been scanned.
   var discoveredHosts = [];
-
-  async function analyzeServer(hostname){
-    return {
-      hostname,
-      hasRootAccess:
-        await ns.hasRootAccess(hostname),
-      requiredHackingLevel:
-        await ns.getServerRequiredHackingLevel(hostname),
-      numPortsRequired:
-        await ns.getServerNumPortsRequired(hostname),
-      money:
-        await ns.getServerMoneyAvailable(hostname),
-      moneyMax:
-        await ns.getServerMaxMoney(hostname)
-    };
-  }
   
   // Returns false when there is no more work to do.
   async function step(){
@@ -47,7 +31,6 @@ export function Crawler(ns, options){
     var hostname = discoveredHosts.pop();
     var alreadyScanned = completeHosts.indexOf(hostname) >= 0;
     if (!alreadyScanned){
-      var server = await analyzeServer(hostname);
       completeHosts.push(hostname);
       var siblings = await ns.scan(hostname);
       forEach(siblings, function(i, e){
