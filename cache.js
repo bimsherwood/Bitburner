@@ -1,6 +1,6 @@
 /** @param {NS} ns **/
 
-import { openCache } from "./cache-server.js";
+var caches = { };
 
 export function Cache(ns, name){
   
@@ -23,7 +23,10 @@ export function Cache(ns, name){
       await ns.exec(cacheLibScriptName, localhost);
     }
     
-    cache = openCache(name);
+    if (typeof(caches[name]) == "undefined"){
+      caches[name] = { };
+    }
+    cache = caches[name];
     
     return {
       load,
@@ -49,7 +52,7 @@ export async function main(ns){
     var dbName = ns.args[0];
     var key = ns.args[1];
     var cache = await (new Cache(ns, dbName)).open();
-    ns.print(cache.load(key));
+    ns.tprint(cache.load(key));
   } else if (ns.args.length == 3){
     var dbName = ns.args[0];
     var key = ns.args[1];
