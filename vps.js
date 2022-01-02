@@ -83,7 +83,7 @@ function Vps(ns, options){
     if (currentSize > 0){
       var newSize = currentSize * 2**levelIncrease;
     } else {
-      var newSize = 2**(levelIncrease - 1);
+      var newSize = 2**(levelIncrease + 1); // At least 4
     }
     
     async function quoteNewSize(){

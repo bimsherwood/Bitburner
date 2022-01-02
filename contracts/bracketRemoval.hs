@@ -36,7 +36,7 @@ solve str =
   in filter (/= '"') . show . map snd . filter ((==)maxLength . fst) $ byLengthDesc
 
 string :: String
-string = "(a)))a())a))"
+string = "(((())a())))"
 
 main :: IO ()
 main = print $ solve string

@@ -1,29 +1,14 @@
 
-## Update reach.js
-
-Implement a new option that only schedules unscheduled hosts, and does not
-disrupt other hosts.
-
-Pass crawler to the discover() function, as it is not needed for the
-single-server update function.
-
-## Automatic VPS management
-
-Fix the shitty mess of code.
-
-Functions:
-- onVpsCreate() // install thief using the new reach.js function
-- class ManagedVPS()
-- size()
-- upgrade()
-
 ## Update find-targets
 
 Inject the server list instead of using the Crawler directly.
 
 Inject query options, such as root access status and money availability.
 
-Remove the sorting from this module.
+Include the host finder in this library, along with the target finder. Add an
+option to pick by power.
+
+Add options for the sort order to this module.
 
 Remove the unused main function.
 
@@ -63,3 +48,18 @@ Automatic contract solver
 
 Collect useful stats? Decide what might be useful. We don't get timing
 information by the looks.
+
+## Targeted transmission between servers
+
+Somehow multiplex a port so that messages can be sent over the port to
+particular servers.
+
+Read all messages and then immediately re-write messages not intended for the
+reader? With exponential backoff to help the intended recipient to get the
+message. Limit the backoff period though.
+
+Give the messages a poison counter, which is larger than the total number of
+instances possibly subscribed to the channel. Poison-queue messages that are
+read over and over by the one same server, even when the reader is backing off.
+
+Maybe abuse the exposure of the message array.

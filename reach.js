@@ -4,7 +4,7 @@ import { Cache } from "./cache.js";
 import { Crawler } from "./crawler.js";
 import { InstallThief } from "./install-thief.js";
 import { rootServer } from "./root-server.js";
-import { findBestTargets } from "./find-target.js";
+import { ServerFinder } from "./find-server.js";
 import { forEach, forEachAsync } from "./utils.js";
 
 function Reach(ns, crawler, install){
@@ -29,50 +29,49 @@ function Reach(ns, crawler, install){
     serverTargets[server] = target;
   }
   
-  async function findBestHosts(){
-    
-    var servers = await crawler.crawl();
-    
-    var serverPower = [];
-    await forEachAsync(servers, async function(i, e){
-      serverPower.push({
-        hostname: e,
-        power: await ns.getServerRam(e)
-      });
-    });
-    
-    var serversByPowerDesc = serverPower.sort(function(a, b){
-      return b.power - a.power;
-    });
-    
-    return serversByPowerDesc
-      .map(function(serverPower){
-        return serverPower.hostname;
-      });
-  }
-  
-  function pairHostsAndTargets(hostsByPowerDesc, targetsByMoneyDesc){
-    var schedule = [];
-    forEach(hostsByPowerDesc, function(i, host){
-      var correspondingTargetIndex = i % targetsByMoneyDesc.length;
-      var correspondingTarget =
-        targetsByMoneyDesc[correspondingTargetIndex].hostname;
-      schedule.push({
-        host: host,
-        target: correspondingTarget
-      });
+  function pairHostsAndTargets(bestHosts, bestTargets){
+    var schedule = {};
+    forEach(bestHosts, function(i, host){
+      var correspondingTargetIndex = i % bestTargets.length;
+      var correspondingTarget = bestTargets[correspondingTargetIndex];
+      schedule[host] = correspondingTarget;
     });
     return schedule;
   }
   
-  async function maybeRootServer(hostname){
+  async function generateSchedule(servers){
+    var hostFinder = new ServerFinder(ns, {
+      hostnames: servers,
+      limit: null,
+      onlyWithRootAccess: true,
+      onlyNotHome: true,
+      onlyWithMoney: false,
+      onlyNotMine: false
+    });
+    var bestHosts = await hostFinder.findBestHosts();
+    var targetFinder = new ServerFinder(ns, {
+      hostnames: servers,
+      limit: 10,
+      onlyWithRootAccess: true,
+      onlyNotHome: true,
+      onlyWithMoney: true,
+      onlyNotMine: true
+    });
+    var bestTargets = await targetFinder.findBestTargets();
+    if(bestTargets.length == 0){
+      return null;
+    }
+    return pairHostsAndTargets(bestHosts, bestTargets);
+  }
+  
+  async function tryRootServer(hostname){
     var success = await rootServer(ns, hostname);
     if (success){
       ns.tprint("Rooted server " + hostname);
     }
   }
   
-  async function tryUpdateServer(hostname, target){
+  async function tryInstall(hostname, target){
     var canInstall =
       await ns.hasRootAccess(hostname) &&
       hostname != "home";
@@ -83,32 +82,43 @@ function Reach(ns, crawler, install){
     }
   }
   
-  async function discover(forceReinstall){
-    
-    // Find servers
-    var bestHosts = await findBestHosts();
+  async function deployOn(host){
+    var servers = await crawler.crawl();
+    var schedule = await generateSchedule(servers);
+    if(schedule == null){
+      ns.tprint("No suitable hosts and/or targets found.");
+      return;
+    }
+    var target = schedule[host];
+    await tryRootServer(host);
+    await tryRootServer(target);
+    await tryInstall(host, target);
+  }
+  
+  async function deploy(forceReinstall){
     
     // Root servers
-    await forEachAsync(bestHosts, async function(i, e){
-      await maybeRootServer(e);
+    var servers = await crawler.crawl();
+    await forEachAsync(servers, async function(i, e){
+      await tryRootServer(e);
     });
     
-    // Find targets
-    var bestTargets = await findBestTargets(ns);
-    if(bestTargets.length == 0){
-      ns.tprint("No suitable target found.");
+    // Find best hosts and targets
+    var schedule = await generateSchedule(servers);
+    if(schedule == null){
+      ns.tprint("No suitable hosts and/or targets found.");
       return;
     }
     
     // Schedule hosts and targets
-    var schedule = pairHostsAndTargets(bestHosts, bestTargets);
-    await forEachAsync(schedule, async function(i, e){
-      var currentTarget = getCurrentServerTarget(e.host);
-      var resinstall =
-        e.target != currentTarget ||
+    await forEachAsync(servers, async function(i, e){
+      var newTarget = schedule[e];
+      var currentTarget = getCurrentServerTarget(e);
+      var reinstall =
+        newTarget != currentTarget ||
         forceReinstall;
-      if (resinstall){
-        await tryUpdateServer(e.host, e.target);
+      if (reinstall && newTarget){
+        await tryInstall(e, newTarget);
       }
     });
     
@@ -116,33 +126,46 @@ function Reach(ns, crawler, install){
   
   return {
     init,
-    discover
+    deploy,
+    deployOn
   };
   
 }
 
 export async function main(ns) {
   
-  var forceReinstall;
-  if (ns.args.length == 0){
-    forceReinstall = false;
-  } else if(ns.args[0] == "--reinstall") {
-    forceReinstall = true;
-  } else {
-    ns.tprint("Usage:");
-    ns.tprint("  reach.js");
-    ns.tprint("  reach.js --reinstall");
-    return;
-  }
+  var reinstallLazy =
+    ns.args.length == 1 &&
+    ns.args[0] == "scan";
+  var reinstallForce =
+    ns.args.length == 2 &&
+    ns.args[0] == "scan" &&
+    ns.args[1] == "--force";
+  var scan = reinstallLazy || reinstallForce;
+  var install =
+    ns.args.length == 2 &&
+    ns.args[0] == "install";
   
-  var installer = new InstallThief(ns);
   var crawler = new Crawler(ns, {
     resultLimit: 1000,
     rootHost: "home"
   });
+  var installer = new InstallThief(ns);
   var reach = new Reach(ns, crawler, installer.installMax);
-  await reach.init();
-  await reach.discover(forceReinstall);
-  ns.tprint("Done.");
+  
+  if(scan){
+    await reach.init();
+    await reach.deploy(reinstallForce);
+    ns.tprint("Done.");
+  } else if (install){
+    var host = ns.args[1];
+    await reach.init();
+    await reach.deployOn(host);
+    ns.tprint("Done.");
+  } else {
+    ns.tprint("Usage:");
+    ns.tprint("  reach.js scan [--force]");
+    ns.tprint("  reach.js install <host>");
+  }
   
 }
