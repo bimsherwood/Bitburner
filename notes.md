@@ -1,42 +1,12 @@
 
-## Update find-targets
+## Stock market script
 
-Inject the server list instead of using the Crawler directly.
-
-Inject query options, such as root access status and money availability.
-
-Include the host finder in this library, along with the target finder. Add an
-option to pick by power.
-
-Add options for the sort order to this module.
-
-Remove the unused main function.
-
-## Update reach.js 
-
-Dependency-inject a Cache.
-
-Split out the scheduler into its own script. Dependency-inject a scheduler.
-
-Parameterise the max target count.
-
-New functions:
-- getAccessibleServers()
-- rootServers(hostnames)
-- deploy(host, target)
-
-## Change the scheduler
-
-Concentrate resources to the top few best targets.
-
-Rank targets by (max money / min security), or something of the like, to
-approximately compare yeild potentials.
-
-Parameterise the target count until a good value can be automatically chosen.
-The optimal number may not be 1, as this server could completely dry up and
-refill every cycle, wasting some calls to hack().
+Make a simple script to buy and sell stock in the long market order position.
 
 ## Update VPS manager
+
+Make the VPS manager automatically call out to reach.js to commission a rebuilt
+server.
 
 Synchronise server decommissions with completion of the thief script somehow.
 

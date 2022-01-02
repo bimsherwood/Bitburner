@@ -1,5 +1,8 @@
 /** @param {NS} ns **/
 
+import { InstallThief } from "./install-thief.js"
+import { Crawler } from "./crawler.js"
+import { Reach } from "./reach.js"
 import { forEachAsync } from "./utils.js"
 
 function getVpsNames(){
@@ -219,7 +222,7 @@ function Manager(ns, options){
   
   async function upgrade(){
     var proposals = await planUpgrade();
-    traceUpgrade(proposals);
+    await traceUpgrade(proposals);
     await executeUpgrade(proposals);
   }
   
@@ -239,10 +242,17 @@ function printHelp(ns){
 
 export async function main(ns) {
   
+  var crawler = new Crawler(ns, {
+    resultLimit: 1000,
+    rootHost: "home"
+  });
+  var installer = new InstallThief(ns);
+  var commissioner = new Reach(ns, crawler, installer.installMax);
+  await commissioner.init();
   var managerOptions = {
     hostnames: getVpsNames(),
     decommission: async function(hostname){ await ns.killall(hostname); },
-    commission: async function(hostname){ },
+    commission: commissioner.deployOn,
     trace: async function(msg){ ns.tprint(msg); }
   };
 

@@ -7,7 +7,7 @@ import { rootServer } from "./root-server.js";
 import { ServerFinder } from "./find-server.js";
 import { forEach, forEachAsync } from "./utils.js";
 
-function Reach(ns, crawler, install){
+export function Reach(ns, crawler, install){
   
   var serverTargets = null;
   
