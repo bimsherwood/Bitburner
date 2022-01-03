@@ -2,10 +2,9 @@
 
 import { InstallThief } from "./install-thief.js"
 import { Crawler } from "./crawler.js"
-import { Reach } from "./reach.js"
 import { forEachAsync } from "./utils.js"
 
-function getVpsNames(){
+export function getVpsNames(){
   return [
     "vps-pikachu",
     "vps-charmander",
@@ -133,7 +132,7 @@ function Vps(ns, options){
   
 }
 
-function Manager(ns, options){
+export function VpsManager(ns, options){
   
   var hostnames = options.hostnames;
   var decommission = options.decommission;
@@ -247,13 +246,17 @@ export async function main(ns) {
     rootHost: "home"
   });
   var installer = new InstallThief(ns);
-  var commissioner = new Reach(ns, crawler, installer.installMax);
-  await commissioner.init();
   var managerOptions = {
     hostnames: getVpsNames(),
-    decommission: async function(hostname){ await ns.killall(hostname); },
-    commission: commissioner.deployOn,
-    trace: async function(msg){ ns.tprint(msg); }
+    decommission: async function(hostname){
+        await ns.killall(hostname);
+      },
+    commission: async function(hostname) {
+        ns.tprint(hostname, " has been upgraded.");
+      },
+    trace: async function(msg){
+        ns.tprint(msg);
+      }
   };
 
   if (ns.args.length == 2 && ns.args[0] == "quote"){
@@ -263,7 +266,7 @@ export async function main(ns) {
   } else if (ns.args.length == 2 && ns.args[0] == "sell"){
     await sell(ns, ns.args[1]);
   } else if (ns.args.length == 1 && ns.args[0] == "upgrade"){
-    var manager = new Manager(ns, managerOptions);
+    var manager = new VpsManager(ns, managerOptions);
     await manager.upgrade();
     ns.tprint("Done.");
   } else {

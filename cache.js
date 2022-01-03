@@ -4,7 +4,6 @@ var caches = { };
 
 export function Cache(ns, name){
   
-  var cacheLibScriptName = "cache-server.js";
   var localhost = ns.getHostname();
   var cache = null;
   
@@ -17,11 +16,6 @@ export function Cache(ns, name){
   }
   
   async function open(){
-  
-    // Ensure cache server is loaded
-    if(!await ns.scriptRunning(cacheLibScriptName, localhost)){
-      await ns.exec(cacheLibScriptName, localhost);
-    }
     
     if (typeof(caches[name]) == "undefined"){
       caches[name] = { };

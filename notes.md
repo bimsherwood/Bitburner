@@ -1,23 +1,33 @@
 
+
 ## Invert control of VPS and Reach
 
 This will allow the reach code to access a consitent cache.
 
-## Database
+Currently Inside Reach:
+  - Schedule cache
+  - Schedule builder
 
-Assign a port for database operations. Clients write requests onto the port and
-use peek() to decide if there is a response ready for them.
+Currenlty Outside Reach:
+  - VPS upgrades
+  - Server finder
+  - Crawler
+  - Installer
+  - Rooter
+  
 
-The server uses peek() to read requests from the port. It writes responses onto
-the port.
+## Fix the fukn buy price bug
 
-The server will also see responses on the port, and will keep track of how long
-the latest response has been on the port. If the response is at the head of the
-port for too long, the response will be dequeued.
+## Better Thief
 
-## Stock market script
+Run concurrent scripts for:
+  - weaken (constantly)
+  - grow (keeping track of a target weakness)
+  - hack (keep track of a target weekness and size)
 
-Make a simple script to buy and sell stock in the long market order position.
+Make the scripts run on only a few threads each so that there is a smoother
+growth and hack rate, which will prevent wasted effort on servers that have
+tighter limits.
 
 ## Update VPS manager
 
