@@ -2,6 +2,7 @@
 
 var portNames = {
   "telemetry" : 1,
+  "db" : 2,
   "test" : 20
 }
 
@@ -49,4 +50,10 @@ export async function portTryReceive(ns, portName){
   var portNumber = portNames[portName];
   var port = await ns.getPortHandle(portNumber);
   return await port.read();
+}
+
+export async function portPeek(ns, portName){
+  var portNumber = portNames[portName];
+  var port = await ns.getPortHandle(portNumber);
+  return await port.peek();
 }

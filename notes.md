@@ -1,4 +1,20 @@
 
+## Invert control of VPS and Reach
+
+This will allow the reach code to access a consitent cache.
+
+## Database
+
+Assign a port for database operations. Clients write requests onto the port and
+use peek() to decide if there is a response ready for them.
+
+The server uses peek() to read requests from the port. It writes responses onto
+the port.
+
+The server will also see responses on the port, and will keep track of how long
+the latest response has been on the port. If the response is at the head of the
+port for too long, the response will be dequeued.
+
 ## Stock market script
 
 Make a simple script to buy and sell stock in the long market order position.
