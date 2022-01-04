@@ -12,13 +12,16 @@ async function analyseMarket(ns){
   var profiles = [];
   await forEachAsync(symbols, async function(i, e){
     var position = await ns.stock.getPosition(e);
+    var ownedShares = position[0];
+    var maxShares = await ns.stock.getMaxShares(e);
     profiles.push({
       symbol: e,
-      shares: position[0],
+      shares: ownedShares,
       askPrice: await ns.stock.getAskPrice(e),
       bidPrice: await ns.stock.getBidPrice(e),
       growthChance: await ns.stock.getForecast(e),
-      maxShares: await ns.stock.getMaxShares(e)
+      maxShares: maxShares,
+      availableShares: maxShares - ownedShares
     });
   });
   return profiles;
@@ -27,7 +30,7 @@ async function analyseMarket(ns){
 function bestForecast(profiles){
   return profiles
     .filter(function(profile){
-      var maxPurchase = profile.askPrice * profile.maxShares;
+      var maxPurchase = profile.askPrice * profile.availableShares;
       return maxPurchase > packetSize;
     })
     .sort(function(a,b){
@@ -57,7 +60,7 @@ async function buyBest(ns, profiles){
   var funds = await ns.getServerMoneyAvailable("home");
   var bestStock = bestForecast(profiles);
   if(bestStock.growthChance > buyInGrowth){
-    var maxPurchase = bestStock.askPrice * bestStock.maxShares;
+    var maxPurchase = bestStock.askPrice * bestStock.availableShares;
     var maxPackets = Math.floor(maxPurchase / packetSize);
     var fundablePackets = Math.floor((funds - transactionCost) / packetSize);
     var packets = Math.min(maxPackets, fundablePackets);

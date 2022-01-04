@@ -98,8 +98,6 @@ export function Reach(ns, options){
       target = newSchedule[host];
     }
     if(target != null){
-      await tryRootServer(host);
-      await tryRootServer(target);
       await tryInstall(host, target);
     } else {
       await trace("No target allocated to ", host);

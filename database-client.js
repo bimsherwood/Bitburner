@@ -1,12 +1,13 @@
 /** @param {NS} ns **/
 
-import { portSend, portTryReceive, portPeek } from "./utils.js";
+import { portSend, portTryReceive, portPeek } from "utils.js";
 
 async function DatabaseReadRequest(ns, database, key){
   
   var channel =
     await ns.getHostname() +
     "|" + await ns.getScriptName() +
+    "|" + ns.args.join("|") +
     "|" + database
     "|" + key;
   
@@ -24,6 +25,7 @@ async function DatabaseWriteRequest(ns, database, key, value){
   var channel =
     await ns.getHostname() +
     "|" + await ns.getScriptName() +
+    "|" + ns.args.join("|") +
     "|" + database
     "|" + key;
   
@@ -53,7 +55,7 @@ export function DatabaseClient(ns, database){
   
   async function awaitReadResponse(request){
     var timeout = 5000;
-    var pollPeriod = 100;
+    var pollPeriod = 10;
     for(var time = 0; time < timeout; time += pollPeriod){
       await ns.sleep(pollPeriod);
       var message = await portPeek(ns, "db");
@@ -66,6 +68,7 @@ export function DatabaseClient(ns, database){
         return message.value;
       }
     }
+    ns.print("Database read timeout: ", request);
   }
   
   async function read(key){

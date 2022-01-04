@@ -1,8 +1,14 @@
 /** @param {NS} ns **/
 
-import { Cache } from "./cache.js";
-import { DatabaseClient } from "./database-client.js"
-import { safeLoop, portSend, portTryReceive, portPeek } from "./utils.js";
+import { Cache } from "cache.js";
+import { DatabaseClient } from "database-client.js"
+import {
+    safeLoop,
+    portSend,
+    portTryReceive,
+    portPeek,
+    portClear
+  } from "utils.js";
 
 function DatabaseResponse(request, value){
   
@@ -19,7 +25,7 @@ function DatabaseResponse(request, value){
 function DatabaseServer(ns){
   
   var responseTTL = 5000;
-  var pollPeriod = 100;
+  var pollPeriod = 10;
   var lastResponseChannel = null;
   var lastResponseLife = 0;
   
@@ -55,22 +61,29 @@ function DatabaseServer(ns){
   }
   
   async function run(){
+    await portClear(ns, "db");
     for(;;){
       
-      await ns.sleep(pollPeriod);
-      
       var message = await portPeek(ns, "db");
-      if (message == "NULL PORT DATA") continue;
-      
-      ns.print("Database server found message ", message);
-      if (message.type == "read") {
+      if (message == "NULL PORT DATA") {
+        await ns.sleep(10*pollPeriod);
+      } else if (message.type == "read") {
+        ns.print("Read request: ", message);
         await portTryReceive(ns, "db");
         await serviceReadRequest(message);
+        await ns.sleep(pollPeriod);
       } else if (message.type == "write") {
+        ns.print("Write request: ", message);
         await portTryReceive(ns, "db");
         await serviceWriteRequest(message);
+        await ns.sleep(pollPeriod);
       } else if (message.type == "response"){
+        ns.print("Unconsumed response: ", message);
         await serviceResponse(message);
+        await ns.sleep(pollPeriod);
+      } else {
+        ns.print("Bad message: ", message);
+        await portTryReceive(ns, "db");
       }
       
     }
@@ -89,14 +102,14 @@ export async function main(ns){
   } else if (ns.args.length == 3 && ns.args[0] == "read"){
     var database = ns.args[1];
     var key = ns.args[2];
-    var client = new DatabaseClient(ns, key);
+    var client = new DatabaseClient(ns, database);
     var result = await client.read(key);
     ns.tprint(result);
   } else if (ns.args.length == 4 && ns.args[0] == "write"){
     var database = ns.args[1];
     var key = ns.args[2];
     var value = ns.args[3];
-    var client = new DatabaseClient(ns, key);
+    var client = new DatabaseClient(ns, database);
     await client.write(key, value);
   } else {
     ns.tprint("Usage:");
