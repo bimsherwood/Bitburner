@@ -1,92 +1,84 @@
 /** @param {NS} ns **/
 
-import { DatabaseClient } from "./database-client.js";
 import { safeLoop } from "./utils.js";
+
+var _cellStates;
+var getLocalCellState = function(instanceId){
+  if(typeof(_cellStates) === "undefined"){
+    _cellStates = [];
+  }
+  if(typeof(_cellStates[instanceId]) === "undefined"){
+    _cellStates[instanceId] = {
+      command: "idle",
+      target: null
+    };
+  }
+  return _cellStates[instanceId];
+}
 
 function Cell (ns, options) {
   
-  var database = options.database;
-  var localInstanceName = options.localInstanceName;
-  
-  async function dbRead(subkey){
-    var globalInstanceName = await ns.getHostname() + "|" + localInstanceName;
-    return await database.read(globalInstanceName + "-" + subkey);
-  }
-  
-  async function dbWrite(subkey, data){
-    var globalInstanceName = await ns.getHostname() + "|" + localInstanceName;
-    return await database.write(globalInstanceName + "-" + subkey, data);
-  }
-  
-  async function executeInstruction(instruction){
-    var operation = instruction.operation;
-    var target = instruction.target;
-    switch(operation){
-      case "grow":
-        await ns.grow(target);
-        break;
-      case "weaken":
-        await ns.weaken(target);
-        break;
-      case "hack":
-        await ns.hack(target);
-        break;
-      default:
-        await ns.sleep(1000);
-        ns.print("Unknown operation: ", operation);
-        break;
-    }
-  }
+  var instanceId = options.instanceId;
+  var cellState = getLocalCellState(instanceId);
   
   async function execute(){
-    
-    var commandStatus = await dbRead("status");
-    var commandInstruction = await dbRead("instruction");
-    if(commandStatus == "continuous" && commandInstruction != null){
-      ns.print("Continuous: ", commandInstruction);
-      await executeInstruction(commandInstruction);
-    } else if(commandStatus == "oneshot" && commandInstruction != null) {
-      ns.print("One Shot: ", commandInstruction);
-      await executeInstruction(commandInstruction);
-      await dbWrite("status", "complete");
-    } else {
-      await ns.sleep(6*1000); // Idle
-    }
-    
-  }
-
-  async function run() {
     await safeLoop(ns, async function(){
-      await execute();
+      switch(cellState.command){
+        case "hack":
+          await ns.hack(cellState.target);
+          break;
+        case "weaken":
+          await ns.weaken(cellState.target);
+          break;
+        case "grow":
+          await ns.grow(cellState.target);
+          break;
+        default:
+          await ns.sleep(6*1000);
+          break;
+      }
     });
   }
-
+  
   return {
-    run
-  };
-
+	  execute
+  }
+  
 };
 
 function printHelp(ns){
   ns.tprint("Usage:");
-  ns.tprint("  cell.js <database> <local instance name>");
+  ns.tprint("  cell.js <instance number>");
+  ns.tprint("  cell.js <instance number> hack <target>");
+  ns.tprint("  cell.js <instance number> weaken <target>");
+  ns.tprint("  cell.js <instance number> grow <target>");
 }
 
 export async function main(ns) {
   
-  var argc = ns.args.length;
-  if(argc != 2){
+  if(ns.args.length == 1){
+    var instanceId = ns.args[0];
+    var newCell = new Cell(ns, { instanceId });
+    await newCell.execute();
+  } else if(ns.args.length == 2 && ns.args[1] == "status"){
+    var instanceId = ns.args[0];
+    var cellState = getLocalCellState(instanceId);
+    ns.tprint(
+      "Cell ",
+      instanceId,
+      ": ",
+      cellState.command,
+      " ",
+      cellState.target);
+  } else if(ns.args.length == 3){
+    var instanceId = ns.args[0];
+    var command = ns.args[1];
+    var target = ns.args[2];
+    var cellState = getLocalCellState(instanceId);
+    cellState.command = command;
+    cellState.target = target;
+  } else {
     printHelp(ns);
-    return;
   }
-  
-  var databaseName = ns.args[0];
-  var instanceName = ns.args[1];
-  var database = new DatabaseClient(ns, databaseName);
-  var cell = new Cell(ns, {
-    database: database,
-    localInstanceName: instanceName
-  });
-  await cell.run();
   
 }

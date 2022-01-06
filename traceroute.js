@@ -85,9 +85,10 @@ export function TraceRoute (ns, options){
   
 }
 
-function printRoute(ns, route){
+function printRoute(ns, route, connectMode){
   var hostnames = route.getRoute().reverse();
-  ns.tprint(hostnames.join(" -> "));
+  var joiner = connectMode ? "; connect " : " -> ";
+  ns.tprint(hostnames.join(joiner));
 }
 
 export async function main(ns){
@@ -97,6 +98,13 @@ export async function main(ns){
     rootHost: "home"
   });
   var allRoutes = await traceRoute.crawl();
+  
+  var connectMode;
+  if(ns.args.length >= 2 && ns.args[1] == "--connect"){
+    connectMode = true;
+  } else {
+    connectMode = false;
+  }
   
   var matchingRoutes;
   if(ns.args.length == 0){
@@ -110,7 +118,7 @@ export async function main(ns){
   }
   
   forEach(matchingRoutes, function(i, route){
-    printRoute(ns, route);
+    printRoute(ns, route, connectMode);
   });
 
 }

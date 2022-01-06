@@ -84,6 +84,7 @@ function Vps(ns, options){
       await trace("Failed to buy server " + hostname);
       return false;
     }
+    await ns.sleep(1000);
     await commission(hostname);
     return true;
   }
@@ -95,7 +96,7 @@ function Vps(ns, options){
     if (currentSize > 0){
       var newSize = currentSize * 2**levelIncrease;
     } else {
-      var newSize = 2**(levelIncrease + 1); // At least 4
+      var newSize = 2**(levelIncrease + 2); // At least 8
     }
     
     async function quoteNewSize(){

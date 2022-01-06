@@ -97,6 +97,8 @@ export function Reach(ns, options){
     } else {
       var newSchedule = await generateSchedule(servers);
       target = newSchedule[host];
+      await trace("New server " + host);
+      await trace(newSchedule);
     }
     if(target != null){
       await tryInstall(host, target);
@@ -142,7 +144,7 @@ export function Reach(ns, options){
   
   async function manage(){
     var upgradePeriod = 60*1000;
-    var scanPeriod = 60*upgradePeriod;
+    var scanPeriod = 5*upgradePeriod;
     for(;;){
       await deployEverywhere(false);
       for(var i = 0; i < scanPeriod; i += upgradePeriod){
@@ -197,7 +199,7 @@ export async function main(ns) {
     await reach.deployEverywhere(scanForce);
     ns.tprint("Done.");
   } else if (install){
-    var host = ns.args[1];
+    var host = ns.args[2];
     await reach.init();
     await reach.deployOn(host);
     ns.tprint("Done.");
