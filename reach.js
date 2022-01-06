@@ -10,6 +10,7 @@ import { getVpsNames, VpsManager } from "./vps.js";
 
 export function Reach(ns, options){
   
+  var targetLimit = options.targets;
   var crawler = options.crawler;
   var installer = options.installer;
   var decommission = options.decommission;
@@ -48,7 +49,7 @@ export function Reach(ns, options){
     var bestHosts = await hostFinder.findBestHosts();
     var targetFinder = new ServerFinder(ns, {
       hostnames: servers,
-      limit: 10,
+      limit: targetLimit,
       onlyWithRootAccess: true,
       onlyNotHome: true,
       onlyWithMoney: true,
@@ -163,18 +164,19 @@ export function Reach(ns, options){
 export async function main(ns) {
   
   var scanLazy =
-    ns.args.length == 1 &&
-    ns.args[0] == "scan";
-  var scanForce =
     ns.args.length == 2 &&
     ns.args[0] == "scan" &&
-    ns.args[1] == "--force";
+    ns.args[1] != "--force";
+  var scanForce =
+    ns.args.length == 3 &&
+    ns.args[0] == "scan" &&
+    ns.args[2] == "--force";
   var scan = scanLazy || scanForce;
   var install =
-    ns.args.length == 2 &&
+    ns.args.length == 3 &&
     ns.args[0] == "install";
   var manage =
-    ns.args.length == 1 &&
+    ns.args.length == 2 &&
     ns.args[0] == "manage";
   
   var crawler = new Crawler(ns, {
@@ -183,6 +185,7 @@ export async function main(ns) {
   });
   var installer = new InstallThief(ns);
   var reach = new Reach(ns, {
+    targets: ns.args[1],
     crawler: crawler,
     installer: installer,
     decommission: async function(hostname){ await ns.killall(hostname); },
@@ -203,9 +206,9 @@ export async function main(ns) {
     await reach.manage();
   } else {
     ns.tprint("Usage:");
-    ns.tprint("  reach.js scan [--force]");
-    ns.tprint("  reach.js install <host>");
-    ns.tprint("  reach.js manage");
+    ns.tprint("  reach.js scan <target limit> [--force]");
+    ns.tprint("  reach.js install <target limit> <host>");
+    ns.tprint("  reach.js manage <target limit>");
   }
   
 }

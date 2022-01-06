@@ -1,5 +1,7 @@
 /** @param {NS} ns **/
 
+import { forEachAsync } from "utils.js";
+
 function defaultOptions(){
   return {
     maxNodes: 32,
@@ -30,25 +32,55 @@ export function NodeNurse(ns, options){
     }
   }
   
-  async function increaseOn(nodeId, max, getSize, getCost, upgrade){
-    while(await getSize(nodeId) < max){
-      var currentFunds = await ns.getServerMoneyAvailable("home");
-      var cost = await getCost(nodeId, 1);
-      if (cost > currentFunds) break;
-      var success = await upgrade(nodeId);
-      if (!success) {
-        ns.print("Attempted upgrade failed");
-        break
-      };
-      await ns.sleep(100);
+  async function nodesByLowest(getSize){
+    var nodeCount = await ns.hacknet.numNodes();
+    var scored = [];
+    for(var i = 0; i < nodeCount; i++){
+      scored.push({
+        index: i,
+        score: await getSize(i)
+      });
     }
+    return scored
+      .sort(function(a, b){
+        return a.score - b.score;
+      })
+      .map(function(x){
+        return x.index;
+      });
+  }
+  
+  async function increaseOn(
+      nodeId,
+      max,
+      getSize,
+      getCost,
+      upgrade){
+    
+    if(await getSize(nodeId) >= max) return false;
+    
+    var currentFunds = await ns.getServerMoneyAvailable("home");
+    var cost = await getCost(nodeId, 1);
+    if (cost > currentFunds) return false;
+    
+    var success = await upgrade(nodeId);
+    if (!success) {
+      ns.print("Attempted upgrade failed");
+    };
+    
+    return success;
+      
   }
   
   async function increase(max, getSize, getCost, upgrade){
-    var nodeCount = await ns.hacknet.numNodes();
-    for(var i = 0; i < nodeCount; i++){
-      await increaseOn(i, max, getSize, getCost, upgrade);
-      await ns.sleep(100);
+    for(var success = true; success; ){
+      var nodes = await nodesByLowest(getSize);
+      var success = await increaseOn(
+          nodes[0],
+          max,
+          getSize,
+          getCost,
+          upgrade);
     }
   }
   
@@ -70,11 +102,6 @@ export function NodeNurse(ns, options){
   async function maintain(){
     await buyNodes();
     await increase(
-      maxNodeCores,
-      getCoreCount,
-      ns.hacknet.getCoreUpgradeCost,
-      ns.hacknet.upgradeCore);
-    await increase(
       maxNodeRam,
       getRamSize,
       ns.hacknet.getRamUpgradeCost,
@@ -84,6 +111,11 @@ export function NodeNurse(ns, options){
       getLevel,
       ns.hacknet.getLevelUpgradeCost,
       ns.hacknet.upgradeLevel);
+    await increase(
+      maxNodeCores,
+      getCoreCount,
+      ns.hacknet.getCoreUpgradeCost,
+      ns.hacknet.upgradeCore);
   }
   
   return {

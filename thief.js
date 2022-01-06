@@ -16,7 +16,7 @@ function Thief (ns, target) {
     var targetMoney = Math.min(maxMoney, lastMoney * 1.05 + 1);
     
     var currentSecurity = ns["getServerSecurityLevel"](target);
-    var targetSecurity = Math.max(minSecurity, lastSecurity * 0.95);
+    var targetSecurity = Math.max(minSecurity, lastSecurity * 0.8);
     
     ns.print("### Target security: ", currentSecurity, " / ", targetSecurity);
     ns.print("### Target money: ", currentMoney, " / ", targetMoney);
@@ -31,14 +31,16 @@ function Thief (ns, target) {
       await ns["hack"](target);
     }
     
+    await ns.sleep(Math.floor(1000*Math.random()));
+    
   }
 
-  async function run() {
+  async function start() {
     await safeLoop(ns, heuristic);
   }
 
   return {
-    run
+    start
   };
 
 };
@@ -58,6 +60,6 @@ export async function main(ns) {
   
   var target = ns.args[0];
   var thief = new Thief(ns, target);
-  await thief.run();
+  await thief.start();
   
 }

@@ -6,16 +6,26 @@ import { forEachAsync } from "./utils.js"
 
 export function getVpsNames(){
   return [
-    "vps-pikachu",
-    "vps-charmander",
     "vps-absol",
-    "vps-scorbunny",
-    "vps-meowth",
-    "vps-rattata",
+    "vps-arbok",
+    "vps-arcanine",
     "vps-bonsly",
+    "vps-buneary",
+    "vps-charmander",
+    "vps-clefairy",
+    "vps-cubone",
+    "vps-dartrix",
     "vps-diglet",
-    "vps-vulpix",
-    "vps-dragonite"
+    "vps-dragonite",
+    "vps-eevee",
+    "vps-ekans",
+    "vps-gengar",
+    "vps-marowak",
+    "vps-meowth",
+    "vps-pikachu",
+    "vps-rattata",
+    "vps-scorbunny",
+    "vps-vulpix"
   ];
 }
 

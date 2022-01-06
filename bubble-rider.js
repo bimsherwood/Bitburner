@@ -1,6 +1,6 @@
 /** @param {NS} ns **/
 
-import { safeLoop, forEachAsync } from "./utils.js";
+import { safeLoop, forEach, forEachAsync } from "./utils.js";
 
 var transactionCost = 100*1000;
 var packetSize = 1000*1000*1000;
@@ -76,24 +76,41 @@ async function buyBest(ns, profiles){
   }
 }
 
+async function printNetWorth(ns, analysis){
+  var total = 0;
+  forEach(analysis, function(i, e){
+    if(e.shares > 0){
+      total += e.shares * e.bidPrice;
+    }
+  });
+  ns.tprint("Current value: ", ns.nFormat(total, '($ 0.00 a)'));
+}
+
 export async function main(ns){
+  
+  async function loop(f){
+    for(;;){
+      var analysis = await analyseMarket(ns);
+      await f(ns, analysis);
+      await ns.sleep(6*1000);
+    }
+  }
   
   var f;
   if(ns.args.length == 1 && ns.args[0] == "buy"){
-    f = buyBest;
+    await loop(buyBest);
   } else if(ns.args.length == 1 && ns.args[0] == "sell"){
-    f = sellRisky;
+    await loop(sellRisky);
+  } else if(ns.args.length == 1 && ns.args[0] == "show-value"){
+    var analysis = await analyseMarket(ns);
+    await printNetWorth(ns, analysis);
+    return;
   } else {
     ns.tprint("Usage:");
     ns.tprint("  bubble-rider.js buy");
     ns.tprint("  bubble-rider.js sell");
+    ns.tprint("  bubble-rider.js show-value");
     return;
-  }
-  
-  for(;;){
-    var analysis = await analyseMarket(ns);
-    await f(ns, analysis);
-    await ns.sleep(6*1000);
   }
   
 }

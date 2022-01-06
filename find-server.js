@@ -81,7 +81,8 @@ export function ServerFinder(ns, options){
   }
   
   function scoreTarget(profile){
-    return profile.maxRam / (1 + profile.minSecurity);
+    var securityScore = profile.minSecurity * profile.security;
+    return profile.maxMoney / (1 + securityScore*securityScore);
   }
   
   function scoreHost(profile){
