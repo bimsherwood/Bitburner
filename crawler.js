@@ -1,6 +1,6 @@
 /** @param {NS} ns **/
 
-import { forEach } from "./utils.js";
+import { forEach } from "utils.js";
 
 export function Crawler(ns, options){
   

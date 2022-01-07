@@ -1,7 +1,7 @@
 /** @param {NS} ns **/
 
-import { forEach, forEachAsync } from "./utils.js";
-import { Crawler } from "./crawler.js";
+import { forEach, forEachAsync } from "utils.js";
+import { Crawler } from "crawler.js";
 
 // Lists the rooted servers in order of max money descending
 export async function findBestTargets(ns, hostnames, options){
@@ -16,7 +16,7 @@ export async function findBestTargets(ns, hostnames, options){
 export function ServerFinder(ns, options){
   
   var hostnames = options.hostnames;
-  var resultLimit = options.limit;
+  var limit = options.limit;
   var onlyWithRootAccess = options.onlyWithRootAccess;
   var onlyWithMoney = options.onlyWithMoney;
   var onlyNotMine = options.onlyNotMine;
@@ -103,7 +103,7 @@ export function ServerFinder(ns, options){
     return profiles
       .filter(filter)
       .sort(compareDesc)
-      .slice(0, resultLimit || Infinity)
+      .slice(0, limit || Infinity)
       .map(getHostname);
   }
   

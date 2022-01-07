@@ -3,7 +3,8 @@
 import { safeLoop } from "./utils.js";
 
 var _cellStates;
-var getLocalCellState = function(instanceId){
+
+function getLocalCellState(instanceId){
   if(typeof(_cellStates) === "undefined"){
     _cellStates = [];
   }
@@ -49,6 +50,7 @@ function Cell (ns, options) {
 function printHelp(ns){
   ns.tprint("Usage:");
   ns.tprint("  cell.js <instance number>");
+  ns.tprint("  cell.js <instance number> status");
   ns.tprint("  cell.js <instance number> hack <target>");
   ns.tprint("  cell.js <instance number> weaken <target>");
   ns.tprint("  cell.js <instance number> grow <target>");

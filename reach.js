@@ -131,6 +131,15 @@ export function Reach(ns, options){
     
   }
   
+  async function removeEverywhere(){
+    var servers = await crawler.crawl();
+    await forEachAsync(servers, async function(i, e){
+      if(e != "home"){
+        await installer.uninstall(e);
+      }
+    });
+  }
+  
   async function upgradeVps(){
     var vpsHosts = await getVpsNames();
     var manager = new VpsManager(ns, {
@@ -149,7 +158,7 @@ export function Reach(ns, options){
       await deployEverywhere(false);
       for(var i = 0; i < scanPeriod; i += upgradePeriod){
         await upgradeVps();
-        await ns.sleep(60*1000);
+        await ns.sleep(upgradePeriod);
       }
     }
   }
@@ -158,7 +167,8 @@ export function Reach(ns, options){
     init,
     deployEverywhere,
     deployOn,
-    manage
+    manage,
+    removeEverywhere
   };
   
 }
@@ -180,6 +190,9 @@ export async function main(ns) {
   var manage =
     ns.args.length == 2 &&
     ns.args[0] == "manage";
+  var uninstall = 
+    ns.args.length == 1 &&
+    ns.args[0] == "uninstall";
   
   var crawler = new Crawler(ns, {
     resultLimit: 1000,
@@ -206,11 +219,15 @@ export async function main(ns) {
   } else if (manage){
     await reach.init();
     await reach.manage();
+  } else if (uninstall){
+    await reach.init();
+    await reach.removeEverywhere();
   } else {
     ns.tprint("Usage:");
     ns.tprint("  reach.js scan <target limit> [--force]");
     ns.tprint("  reach.js install <target limit> <host>");
     ns.tprint("  reach.js manage <target limit>");
+    ns.tprint("  reach.js uninstall");
   }
   
 }

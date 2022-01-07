@@ -1,7 +1,6 @@
 /** @param {NS} ns **/
 
-import { DatabaseClient } from "./database-client.js";
-import { forEachAsync } from "./utils.js";
+import { forEachAsync } from "utils.js";
 
 export function InstallCell (ns){
   
@@ -26,7 +25,7 @@ export function InstallCell (ns){
     var ramAvailable = ramMax - ramUsed;
     var instanceCount = Math.floor(ramAvailable / ramRequired) - 1;
     for(var i = 0; i < instanceCount; i++){
-      await ns.sleep(100);
+      await ns.sleep(10);
       await ns.exec(
         mainScript,
         hostname,

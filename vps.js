@@ -1,8 +1,7 @@
 /** @param {NS} ns **/
 
-import { InstallThief } from "./install-thief.js"
-import { Crawler } from "./crawler.js"
-import { forEachAsync } from "./utils.js"
+import { Crawler } from "crawler.js"
+import { forEachAsync } from "utils.js"
 
 export function getVpsNames(){
   return [
@@ -256,7 +255,6 @@ export async function main(ns) {
     resultLimit: 1000,
     rootHost: "home"
   });
-  var installer = new InstallThief(ns);
   var managerOptions = {
     hostnames: getVpsNames(),
     decommission: async function(hostname){
