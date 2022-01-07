@@ -23,7 +23,7 @@ multiSums n =
   n
 
 number :: Int
-number = 16
+number = 77
 
 main :: IO ()
 main =

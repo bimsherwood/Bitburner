@@ -1,10 +1,4 @@
 
-## Improve Reach: Uninstaller
-
-## Better Thief: Cell
-
-
-
 ## Company Strategy script
 
 - Takes the division name as param
@@ -34,7 +28,6 @@ Subsystem: Product development
 - Develop one product at a time from a pre-determined list (which list?)
 
 ## Fix the VPS upgrade not considering more than 1 level update
-
 
 ## Contract solver
 

@@ -2,7 +2,8 @@
 
 import { Crawler } from "crawler.js";
 import { ServerFinder } from "find-server.js";
-import { InstallCell } from "install-cell.js";
+import { Cell, InstallCell } from "install-cell.js";
+import { rootServer } from "root-server.js";
 import { forEach, forEachAsync, safeLoop } from "utils.js";
 import { getVpsNames, VpsManager } from "vps.js";
 
@@ -16,16 +17,6 @@ function getBioticState(){
     _bioticState.cellPool = new CellPool();
   }
   return _bioticState;
-}
-
-// A model for an instance of Cell.js running on a server
-function Cell(hostname, instanceId){
-  
-  return {
-    hostname,
-    instanceId
-  };
-  
 }
 
 // A distribution of jobs that a collection of Cells can handle.
@@ -84,12 +75,8 @@ function CellPool(){
     delete hosts[hostname];
   }
   
-  function addHost(hostname, cellCount){
-    var newCells = [];
-    for(var i = 0; i < cellCount; i++){
-      newCells.push(new Cell(hostname, i));
-    }
-    hosts[hostname] = newCells;
+  function addHost(hostname, cells){
+    hosts[hostname] = cells;
   }
   
   function getCells(){
@@ -118,16 +105,15 @@ function CellPool(){
 
 function Allocator(ns){
   
-  var weakenSchedule = new Schedule(30,1,1);
-  var growSchedule = new Schedule(10,30,1);
-  var hackSchedule = new Schedule(10,30,10);
+  var weakenSchedule = new Schedule(1,0,0);
+  var growSchedule = new Schedule(1,2,0);
+  var hackSchedule = new Schedule(3,6,1);
   
   async function updateCellCommand(cell, command, target){
     
     async function runUpdate(){
-      await ns.exec(
+      await ns.run(
         "cell.js",
-        cell.hostname,
         1,
         cell.instanceId,
         command,
@@ -137,7 +123,7 @@ function Allocator(ns){
     async function updateStillRunning(){
       return await ns.isRunning(
         "cell.js",
-        cell.hostname,
+        ns.getHostname(),
         cell.instanceId,
         command,
         target)
@@ -163,13 +149,13 @@ function Allocator(ns){
     
     var schedule;
     if(weakenStage){
-      ns.tprint("Weakening ", target);
+      ns.tprint("Weakening ", target, " (", cells.length, ")");
       schedule = weakenSchedule;
     } else if(growStage){
-      ns.tprint("Growing ", target);
+      ns.tprint("Growing ", target, " (", cells.length, ")");
       schedule = growSchedule;
     } else {
-      ns.tprint("Hacking ", target);
+      ns.tprint("Hacking ", target, " (", cells.length, ")");
       schedule = hackSchedule;
     }
     
@@ -188,18 +174,18 @@ function Allocator(ns){
     forEach(targets, function(i, target){
       
       var firstCell;
-      var cellCount;
+      var stopCell;
       if (i==0){
         firstCell = 0;
-        cellCount = cellsForFirst;
+        stopCell = cellsForFirst;
       } else {
         firstCell = cellsForFirst + cellsForRest*(i-1);
-        cellCount = cellsForRest;
+        stopCell = firstCell + cellsForRest;
       }
       
       allocations.push({
         target,
-        cells: allCells.slice(firstCell, cellCount)
+        cells: allCells.slice(firstCell, stopCell)
       });
       
     });
@@ -235,7 +221,8 @@ function CellManager(ns, options){
   }
   
   async function installOn(hostname){
-    return await installer.install(hostname);
+    var newCells = await installer.install(hostname);
+    cellPool.addHost(hostname, newCells);
   }
   
   async function install(hostname){
@@ -254,8 +241,7 @@ function CellManager(ns, options){
     // Install on hosts
     cellPool.clear();
     await forEachAsync(hosts, async function(i, hostname){
-      var cellCount = await installOn(hostname);
-      cellPool.addHost(hostname, cellCount);
+      await installOn(hostname);
     });
     
   }
@@ -279,7 +265,18 @@ function Biotic (ns, options){
   var bioticState = getBioticState();
   var cellPool = bioticState.cellPool;
   
-  var upgradePeriod = 10*60*1000;
+  var upgradePeriod = 60*1000;
+  
+  async function rootServers(){
+    var allServers = await crawler.crawl();
+    await forEachAsync(allServers, async function(i, hostname){
+      var success = await rootServer(ns, hostname);
+      if (success){
+        await cellManager.installOn(hostname);
+        await trace("Rooted server " + hostname);
+      }
+    });
+  }
   
   async function upgradeVps(){
     var vpsHosts = await getVpsNames();
@@ -309,6 +306,7 @@ function Biotic (ns, options){
   async function manage(){
     await cellManager.install();
     await safeLoop(ns, async function (){
+      await rootServers();
       await upgradeVps();
       await allocateWork();
       await ns.sleep(upgradePeriod);

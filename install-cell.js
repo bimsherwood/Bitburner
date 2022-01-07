@@ -2,6 +2,17 @@
 
 import { forEachAsync } from "utils.js";
 
+// A model for an instance of Cell.js running on a server
+export function Cell(hostname, index){
+  
+  return {
+    hostname,
+    index,
+    instanceId: hostname + "|" + index
+  };
+  
+}
+
 export function InstallCell (ns){
   
   var mainScript = "cell.js";
@@ -24,16 +35,19 @@ export function InstallCell (ns){
     var ramUsed = await ns.getServerUsedRam(hostname);
     var ramAvailable = ramMax - ramUsed;
     var instanceCount = Math.floor(ramAvailable / ramRequired) - 1;
+    var newCells = [];
     for(var i = 0; i < instanceCount; i++){
+      var newCell = new Cell(hostname, i);
       await ns.sleep(10);
       await ns.exec(
         mainScript,
         hostname,
         1,
-        i);
+        newCell.instanceId);
+      newCells.push(newCell);
     }
     
-    return instanceCount;
+    return newCells;
     
   }
   
@@ -62,8 +76,8 @@ function printHelp(ns){
 export async function main(ns) {
   var installCell = new InstallCell(ns);
   if(ns.args.length == 2 && ns.args[0] == "install"){
-    var instanceCount = await installCell.install(ns.args[1]);
-    ns.tprint("Instances installed: ", instanceCount);
+    var newCells = await installCell.install(ns.args[1]);
+    ns.tprint("Instances installed: ", newCells.length);
   } else if(ns.args.length == 2 && ns.args[0] == "uninstall"){
     await installCell.uninstall(ns.args[1]);
   } else {
