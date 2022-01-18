@@ -34,7 +34,17 @@ export function InstallCell (ns){
     var ramMax = await ns.getServerMaxRam(hostname);
     var ramUsed = await ns.getServerUsedRam(hostname);
     var ramAvailable = ramMax - ramUsed;
-    var instanceCount = Math.floor(ramAvailable / ramRequired) - 1;
+    
+    var instanceCount = Math.floor(ramAvailable / ramRequired);
+    var instanceSize = 1;
+    while(instanceCount > 200){
+      instanceSize *= 2;
+      instanceCount = Math.floor(
+        ramAvailable
+        / ramRequired
+        / instanceSize);
+    }
+    
     var newCells = [];
     for(var i = 0; i < instanceCount; i++){
       var newCell = new Cell(hostname, i);
@@ -42,7 +52,7 @@ export function InstallCell (ns){
       await ns.exec(
         mainScript,
         hostname,
-        1,
+        instanceSize,
         newCell.instanceId);
       newCells.push(newCell);
     }

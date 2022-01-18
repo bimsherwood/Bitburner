@@ -106,8 +106,8 @@ function CellPool(){
 function Allocator(ns){
   
   var weakenSchedule = new Schedule(1,0,0);
-  var growSchedule = new Schedule(1,2,0);
-  var hackSchedule = new Schedule(3,6,1);
+  var growSchedule = new Schedule(1,3,0);
+  var hackSchedule = new Schedule(1,1,1);
   
   async function updateCellCommand(cell, command, target){
     
@@ -261,17 +261,19 @@ function Biotic (ns, options){
   var crawler = options.crawler;
   var allocator = options.allocator;
   var targetLimit = options.targetLimit;
+  var vpsUpgrade = options.vpsUpgrade;
   
   var bioticState = getBioticState();
   var cellPool = bioticState.cellPool;
   
-  var upgradePeriod = 60*1000;
+  var upgradePeriod = 5*60*1000;
   
   async function rootServers(){
     var allServers = await crawler.crawl();
     await forEachAsync(allServers, async function(i, hostname){
       var success = await rootServer(ns, hostname);
       if (success){
+        await ns.sleep(1000);
         await cellManager.installOn(hostname);
         await trace("Rooted server " + hostname);
       }
@@ -307,7 +309,9 @@ function Biotic (ns, options){
     await cellManager.install();
     await safeLoop(ns, async function (){
       await rootServers();
-      await upgradeVps();
+      if(vpsUpgrade){
+        await upgradeVps();
+      }
       await allocateWork();
       await ns.sleep(upgradePeriod);
     });
@@ -328,6 +332,8 @@ export async function main(ns) {
     targetLimit = 1;
   }
   
+  var vpsUpgrade = ns.args.indexOf("--no-vps-upgrade") < 0;
+  
   var crawler = new Crawler(ns, {
     resultLimit: 1000,
     rootHost: "home"
@@ -343,7 +349,8 @@ export async function main(ns) {
     cellManager: cellManager,
     crawler: crawler,
     allocator: allocator,
-    targetLimit: targetLimit
+    targetLimit: targetLimit,
+    vpsUpgrade: vpsUpgrade
   });
   await biotic.manage();
   

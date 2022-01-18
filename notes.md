@@ -1,4 +1,6 @@
 
+## More efficient (cached) cell updates?
+
 ## Company Strategy script
 
 - Takes the division name as param

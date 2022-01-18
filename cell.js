@@ -20,9 +20,11 @@ function getLocalCellState(instanceId){
 function Cell (ns, options) {
   
   var instanceId = options.instanceId;
+  
   var cellState = getLocalCellState(instanceId);
   
   async function execute(){
+    cellState.command = "idle";
     await safeLoop(ns, async function(){
       switch(cellState.command){
         case "hack":

@@ -77,10 +77,10 @@ optimalTradingSequence transactionLimit history =
   history
 
 history :: History
-history = [28,133,96,129,126,15,31,115,133,34,96,125,18,159,118,147,48,131,139,141,61,38,160,154,74,16,6,2,53,186,115,31,177,95,110,183,114,17,9,171,191,45,199,111,184,140,172,63]
+history = [103,186,123,83,124,87,122,175,51,177,188,104,85,95,71,97,127]
 
 tradeLimit :: Int
-tradeLimit = 50
+tradeLimit = 2
 
 optimalTrade :: Profit
 optimalTrade =

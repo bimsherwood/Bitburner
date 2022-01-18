@@ -27,7 +27,7 @@ factorise n =
     else firstPrimeFactor : factorise otherFactor
   
 number :: Int
-number = 526368475
+number = 696474140
 
 main :: IO ()
 main = print . maximum . factorise $ number

@@ -182,9 +182,9 @@ export function VpsManager(ns, options){
   async function planUpgrade(){
     
     var proposals = await currentPortfolio();
-    proposals.sort(function(a, b){ return a.upgrade.size - b.upgrade.size; });
+    proposals.sort(function(a, b){ return b.upgrade.size - a.upgrade.size; });
     
-    for(var i = 0; ; i = (i + 1) % proposals.length){
+    for(var i = 0; i < proposals.length; i++){
       
       // Current proposal
       var proposal = proposals[i];
@@ -194,19 +194,22 @@ export function VpsManager(ns, options){
       var quoteBefore = await upgradeBefore.quote();
       var totalQuoteBefore = await quoteAll(proposals);
       
-      // Next proposal
-      var levelIncreaseAfter = levelIncreaseBefore + 1;
-      var upgradeAfter = await server.considerUpgrade(levelIncreaseAfter);
-      var quoteAfter = await upgradeAfter.quote();
-      var totalQuoteAfter = totalQuoteBefore - quoteBefore + quoteAfter;
-      
-      // Can afford it? Update the proposal
-      var funds = await ns.getServerMoneyAvailable("home");
-      if(totalQuoteAfter <= funds){
-        proposal.levelIncrease = levelIncreaseAfter;
-        proposal.upgrade = upgradeAfter;
-      } else {
-        break;
+      // Upgrade Server as much as possible
+      for(var levelIncreaseAfter = levelIncreaseBefore; ; levelIncreaseAfter++){
+        
+        var upgradeAfter = await server.considerUpgrade(levelIncreaseAfter);
+        var quoteAfter = await upgradeAfter.quote();
+        var totalQuoteAfter = totalQuoteBefore - quoteBefore + quoteAfter;
+        
+        // Can afford it? Update the proposal
+        var funds = await ns.getServerMoneyAvailable("home");
+        if(totalQuoteAfter <= funds){
+          proposal.levelIncrease = levelIncreaseAfter;
+          proposal.upgrade = upgradeAfter;
+        } else {
+          break;
+        }
+        
       }
       
     }
