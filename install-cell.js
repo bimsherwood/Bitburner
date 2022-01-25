@@ -30,17 +30,19 @@ export function InstallCell (ns){
       await ns.scp(e, hostname);
     });
     
+    var spareInstances = 1; // How many instances-worth of RAM to leave free
     var ramRequired = await ns.getScriptRam(mainScript);
     var ramMax = await ns.getServerMaxRam(hostname);
     var ramUsed = await ns.getServerUsedRam(hostname);
     var ramAvailable = ramMax - ramUsed;
+    var ramDedicated = ramAvailable - spareInstances * ramRequired;
     
-    var instanceCount = Math.floor(ramAvailable / ramRequired);
+    var instanceCount = Math.floor(ramDedicated / ramRequired);
     var instanceSize = 1;
     while(instanceCount > 200){
       instanceSize *= 2;
       instanceCount = Math.floor(
-        ramAvailable
+        ramDedicated
         / ramRequired
         / instanceSize);
     }

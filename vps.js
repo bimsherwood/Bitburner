@@ -182,7 +182,7 @@ export function VpsManager(ns, options){
   async function planUpgrade(){
     
     var proposals = await currentPortfolio();
-    proposals.sort(function(a, b){ return b.upgrade.size - a.upgrade.size; });
+    proposals.sort(function(a, b){ return a.upgrade.size - b.upgrade.size; });
     
     for(var i = 0; i < proposals.length; i++){
       

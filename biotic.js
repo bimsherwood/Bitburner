@@ -112,8 +112,9 @@ function Allocator(ns){
   async function updateCellCommand(cell, command, target){
     
     async function runUpdate(){
-      await ns.run(
+      await ns.exec(
         "cell.js",
+        cell.hostname,
         1,
         cell.instanceId,
         command,
@@ -123,7 +124,7 @@ function Allocator(ns){
     async function updateStillRunning(){
       return await ns.isRunning(
         "cell.js",
-        ns.getHostname(),
+        cell.hostname,
         cell.instanceId,
         command,
         target)
@@ -203,8 +204,19 @@ function Allocator(ns){
     });
   }
   
+  async function spam(target, cellPool){
+    var allCells = cellPool.getCells();
+    var cellAllocation = allocateCells([target], allCells)[0];
+    var workAllocation = new Allocation(
+      cellAllocation.target,
+      cellAllocation.cells,
+      weakenSchedule);
+    await workAllocation.assignWork(updateCellCommand);
+  }
+  
   return {
-    allocate
+    allocate,
+    spam
   };
   
 }
@@ -262,6 +274,7 @@ function Biotic (ns, options){
   var allocator = options.allocator;
   var targetLimit = options.targetLimit;
   var vpsUpgrade = options.vpsUpgrade;
+  var spam = options.spam;
   
   var bioticState = getBioticState();
   var cellPool = bioticState.cellPool;
@@ -292,17 +305,22 @@ function Biotic (ns, options){
   }
   
   async function allocateWork(){
-    var allServers = await crawler.crawl();
-    var targetFinder = new ServerFinder(ns, {
-      hostnames: allServers,
-      limit: targetLimit,
-      onlyWithRootAccess: true,
-      onlyWithMoney: true,
-      onlyNotMine: true,
-      onlyNotHome: true
-    });
-    var targets = await targetFinder.findBestTargets();
-    await allocator.allocate(targets, cellPool);
+    var targets;
+    if(!spam){
+      var allServers = await crawler.crawl();
+      var targetFinder = new ServerFinder(ns, {
+        hostnames: allServers,
+        limit: targetLimit,
+        onlyWithRootAccess: true,
+        onlyWithMoney: true,
+        onlyNotMine: true,
+        onlyNotHome: true
+      });
+      var targets = await targetFinder.findBestTargets();
+      await allocator.allocate(targets, cellPool);
+    } else {
+      await allocator.spam("n00dles", cellPool);
+    }
   }
   
   async function manage(){
@@ -333,6 +351,7 @@ export async function main(ns) {
   }
   
   var vpsUpgrade = ns.args.indexOf("--no-vps-upgrade") < 0;
+  var spam = ns.args.indexOf("--spam") >= 0;
   
   var crawler = new Crawler(ns, {
     resultLimit: 1000,
@@ -350,7 +369,8 @@ export async function main(ns) {
     crawler: crawler,
     allocator: allocator,
     targetLimit: targetLimit,
-    vpsUpgrade: vpsUpgrade
+    vpsUpgrade: vpsUpgrade,
+    spam: spam
   });
   await biotic.manage();
   
