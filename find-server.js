@@ -3,16 +3,6 @@
 import { forEach, forEachAsync } from "utils.js";
 import { Crawler } from "crawler.js";
 
-// Lists the rooted servers in order of max money descending
-export async function findBestTargets(ns, hostnames, options){
-  return await findBestServers(
-    ns,
-    hostnames,
-    compareTargets,
-    await generateFilter(options),
-    options.limit);
-}
-
 export function ServerFinder(ns, options){
   
   var hostnames = options.hostnames;
@@ -21,6 +11,7 @@ export function ServerFinder(ns, options){
   var onlyWithMoney = options.onlyWithMoney;
   var onlyNotMine = options.onlyNotMine;
   var onlyNotHome = options.onlyNotHome;
+  var onlyLowSecurity = options.onlyLowSecurity;
     
   async function profileServers(){
     var profiles = [];
@@ -70,6 +61,17 @@ export function ServerFinder(ns, options){
       });
     }
     
+    if(onlyLowSecurity){
+      var hackLevel = await ns.getHackingLevel();
+      filters.push(function(serverProfile){
+        var hackRequirement = (
+          3 *
+          serverProfile.minSecurity *
+          serverProfile.minSecurity);
+        return hackLevel >= hackRequirement;
+      });
+    }
+    
     return function(serverProfile){
       var passing = true;
       forEach(filters, function(i, e){
@@ -81,8 +83,10 @@ export function ServerFinder(ns, options){
   }
   
   function scoreTarget(profile){
+    var moneyScore = profile.maxMoney;
     var securityScore = profile.minSecurity;
-    return profile.maxMoney / (1 + securityScore);
+    // Rank by money, then break ties with security
+    return moneyScore * 100 + securityScore;
   }
   
   function scoreHost(profile){

@@ -314,7 +314,8 @@ function Biotic (ns, options){
         onlyWithRootAccess: true,
         onlyWithMoney: true,
         onlyNotMine: true,
-        onlyNotHome: true
+        onlyNotHome: true,
+        onlyLowSecurity: true
       });
       var targets = await targetFinder.findBestTargets();
       await allocator.allocate(targets, cellPool);
