@@ -1,138 +1,111 @@
 /** @param {NS} ns **/
 
-import { forEach, forEachAsync } from "./utils.js";
-
-// An arithmetic mean, with a default of 0 for empty lists
-function average(array){
-  if(array.length > 0){
-    return array.reduce(function (a,b) { return a + b; }) / array.length;
-  } else {
-    return 0;
-  }
-}
-
-// A sliding-window collection of prices for a given stock.
-export function StockHistory(options){
+export function Analysis(ns, options){
   
-  var symbol = options.symbol;
-  var windowSize = options.windowSize;
+  var stockCode = options.stockCode;
+  var historySize = options.historySize;
   
-  // A window of prices from which statistics can be derived.
-  var priceHistory = [];
+  var averagePriceHistory = [];
   
-  // Whether the window is primed (fully filled);
-  function isWindowFull(){
-    return priceHistory.length >= windowSize;
+  function getAveragePrice(windowSize, lookBack){
+    var startAt = averagePriceHistory.length - windowSize - lookBack;
+    var recordings = averagePriceHistory.slice(startAt);
+    var average = recordings.reduce((a,b) => (a+b)) / recordings.length;
+    return average;
   }
   
-  function logPrice(price){
-    priceHistory.push(price);
-    while(priceHistory.length > windowSize){
-      priceHistory.shift();
+  function getTrend(windowSize, lookBack){
+    var startAt = averagePriceHistory.length - windowSize - lookBack;
+    var endAt = lookBack;
+    if(startAt >= 0 && endAt < averagePriceHistory.length){
+      var start = averagePriceHistory[startAt];
+      var end = averagePriceHistory[endAt];
+      var rise = end - start;
+      var growth = rise / start;
+      return growth;
+    } else {
+      return null;
     }
   }
   
-  // The mean average of the step-by-step growth rate
-  function averageGrowth(){
-    
-    if(priceHistory.length <= 1){
-      return 0;
+  async function takeRecording(){
+    var currentPrice = await ns.stock.getPrice(stockCode);
+    averagePriceHistory.push(currentPrice);
+    if(averagePriceHistory.length > historySize){
+      averagePriceHistory.shift();
     }
-    
-    var growths = [];
-    for(var i = 1; i < priceHistory.length; i++){
-      var basePrice = priceHistory[i - 1];
-      var nextPrice = priceHistory[i];
-      if (basePrice != 0){
-        var growth = (nextPrice - basePrice) / basePrice;
-        growths.push(growth);
-      }
-    }
-    
-    return average(growths);
-    
   }
   
   return {
-    symbol,
-    isWindowFull,
-    logPrice,
-    averageGrowth
+    getAveragePrice,
+    getTrend,
+    takeRecording
   };
   
 }
 
-// Monitors the stock prices for the given stocks.
-export function StockMonitor(ns, options){
+export function Market(ns, options){
   
-  var stockSymbols = options.stockSymbols;
-  var windowSize = options.windowSize;
+  var stockCodes = options.stockCodes;
+  var historySize = options.historySize;
+  var trackers = {};
   
-  var stepTime = 6*1000;
-  var stockHistories = stockSymbols.map(function(symbol){
-    return new StockHistory({
-      symbol: symbol,
-      windowSize: windowSize
-    });
-  });
-  
-  async function logPrice(stockHistory){
-    var askPrice = await ns.stock.getAskPrice(stockHistory.symbol);
-    var bidPrice = await ns.stock.getBidPrice(stockHistory.symbol);
-    var price = average([askPrice, bidPrice]);
-    stockHistory.logPrice(price);
+  async function takeRecording(){
+    for(var i in trackers){
+      var tracker = trackers[i];
+      await tracker.takeRecording();
+    }
   }
   
-  async function logPrices(){
-    await forEachAsync(stockHistories, async function(i, e){
-      await logPrice(e);
-    });
+  function getTrendFor(symbol, windowSize, lookBack){
+    var tracker = trackers[symbol];
+    var trend = tracker.getTrend(windowSize, lookBack);
+    return trend;
   }
   
-  // Takes a callback that is called whenever some stock histories are
-  // ready for consumption. The callback is called with the empty array as long
-  // as the histories are not primed with history yet.
-  async function monitor(callback){
-    for(;;){
-      await logPrices();
-      var primedHistories = stockHistories.filter(function(e){
-        return e.isWindowFull();
+  (function(){
+    for(var i in stockCodes){
+      var symbol = stockCodes[i];
+      var analysis = Analysis(ns, {
+        stockCode: symbol,
+        historySize: historySize
       });
-      await callback(primedHistories);
-      await ns.sleep(stepTime);
+      trackers[symbol] = analysis;
     }
-  }
+  })();
   
   return {
-    monitor
+    takeRecording,
+    getTrendFor
   };
   
+}
+
+function printHelp(ns){
+  ns.tprint("Usage:");
+  ns.tprint("  run market-analysis.js <stock code>");
 }
 
 export async function main(ns){
   
-  var symbols = await ns.stock.getSymbols();
-  var stockMonitor = new StockMonitor(ns, {
-    stockSymbols: symbols,
-    windowSize: 16
+  if(ns.args.length != 1){
+    printHelp(ns);
+    return;
+  }
+  
+  var stockCode = ns.args[0];
+  var analysis = Analysis(ns, {
+    stockCode: stockCode,
+    historySize: 3000
   });
-  await stockMonitor.monitor(async function(stockHistories){
-    
-    var bestPerformances = stockHistories
-      .sort(function(a, b){
-        return b.averageGrowth() - a.averageGrowth();
-      })
-      .slice(0, 10);
-      
-    if(bestPerformances.length > 0){
-      ns.tprint("===>");
-      forEach(bestPerformances, function(i, e){
-        ns.tprint(e.symbol, ": ", ns.nFormat(e.averageGrowth(), "0.000e+0"));
-      });
-    } else {
-      ns.tprint("(Analysing market)");
-    }
-    
-  });
+  
+  for(;;){
+    await ns.sleep(1000);
+    await analysis.takeRecording();
+    var fastAverage = analysis.getAveragePrice(25, 0);
+    var recentTrend = analysis.getTrend(25, 0);
+    ns.print("----- ===== -----");
+    ns.print(stockCode, ": ", fastAverage, ", ", recentTrend, "%");
+  }
   
 }

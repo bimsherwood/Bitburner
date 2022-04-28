@@ -1,8 +1,62 @@
+/** @param {NS} ns **/
 
 import { forEachAsync, safeLoop } from "utils.js";
 
-// Hire loop
-// TODO
+export function getMemberNames(){
+  return [
+    "gang-absol",
+    "gang-arbok",
+    "gang-arcanine",
+    "gang-bonsly",
+    "gang-buneary",
+    "gang-charmander",
+    "gang-clefairy",
+    "gang-cubone",
+    "gang-dartrix",
+    "gang-diglet",
+    "gang-dragonite",
+    "gang-eevee",
+    "gang-ekans",
+    "gang-gengar",
+    "gang-marowak",
+    "gang-meowth",
+    "gang-pikachu",
+    "gang-rattata",
+    "gang-scorbunny",
+    "gang-vulpix"
+  ];
+}
+
+function Hiring(ns){
+  
+  async function update(){
+    
+    // Can recruit?
+    var canRecruit = await ns.gang.canRecruitMember();
+    if(!canRecruit) return;
+    
+    // Find an available name
+    var suggestedMemberNames = getMemberNames();
+    var existingMembers = await ns.gang.getMemberNames();
+    var nextMemberName = null;
+    for (var i in suggestedMemberNames) {
+      var suggestedMemberName = suggestedMemberNames[i];
+      if(existingMembers.indexOf(suggestedMemberName) < 0){
+        nextMemberName = suggestedMemberName;
+        break;
+      }
+    }
+    
+    // Recruit
+    await ns.gang.recruitMember(nextMemberName);
+    
+  }
+  
+  return {
+      update
+  };
+  
+}
 
 function Ascension(ns){
   
@@ -10,6 +64,11 @@ function Ascension(ns){
   
   function getMultipliers(memberInfo, ascensionResults){
     var multipliers = [];
+    multipliers.push({
+      name: "HACK",
+      ascendMultiplier: ascensionResults.hack
+    });
+    /*
     multipliers.push({
       name: "AGI",
       ascendMultiplier: ascensionResults.agi
@@ -27,13 +86,10 @@ function Ascension(ns){
       ascendMultiplier: ascensionResults.dex
     });
     multipliers.push({
-      name: "HACK",
-      ascendMultiplier: ascensionResults.hack
-    });
-    multipliers.push({
       name: "STR",
       ascendMultiplier: ascensionResults.str
     });
+    */
     return multipliers;
   }
   
@@ -120,6 +176,7 @@ function Assignment(ns){
     "Cyberterrorism"
   ];
   
+  var reduceHeatJob = "Ethical Hacking";
   
   async function getMembersSkills(members){
     var membersAndSkills = [];
@@ -134,26 +191,55 @@ function Assignment(ns){
     return membersAndSkills;
   }
   
+  async function wantedLevelHigh(){
+    var gangInfo = await ns.gang.getGangInformation();
+    var wantedLevelHigh = gangInfo.wantedLevel > 4;
+    return wantedLevelHigh;
+  }
+  
+  async function wantedLevelGrowing(){
+    var gangInfo = await ns.gang.getGangInformation();
+    var wantedLevelGrowing = gangInfo.wantedLevelGainRate > 0;
+    return wantedLevelGrowing;
+  }
+  
+  async function assignReduceHeatTask(member){
+    await ns.gang.setMemberTask(member, reduceHeatJob);
+  }
+  
   async function optimiseMoneyTask(member){
     
     var easiestJob = moneyJobsByDifficulty[0];
     
     // Start the member at the easiest job
     await ns.gang.setMemberTask(member, easiestJob);
-    var bestJob = easiestJob;
+    var lastJob = easiestJob;
     var initialInfo = await ns.gang.getMemberInformation(member);
     var bestPerformance = initialInfo.moneyGain;
     
     // Promote. If performance declines, demote and stop
     for(var i = 1; i < moneyJobsByDifficulty.length; i++){
       var job = moneyJobsByDifficulty[i];
+      
+      // Experiment
       await ns.gang.setMemberTask(member, job);
+      await ns.sleep(1200);
+      
+      // Check the results of the experiment
       var promotionInfo = await ns.gang.getMemberInformation(member);
       var promotionPerformance = promotionInfo.moneyGain;
-      if(promotionPerformance >= bestPerformance){
-        bestJob = job;
+      var wantedLevelBad =
+        await wantedLevelHigh() ||
+        await wantedLevelGrowing();
+        
+      // Move along, or Fuck Go Back
+      var tryNextPromotion =
+        promotionPerformance >= bestPerformance &&
+        !wantedLevelBad;
+      if(tryNextPromotion){
+        lastJob = job;
       } else {
-        await ns.gang.setMemberTask(member, bestJob);
+        await ns.gang.setMemberTask(member, lastJob);
         break;
       }
     }
@@ -168,13 +254,20 @@ function Assignment(ns){
       return b.hackSkill - a.hackSkill; // Desc
     });
     
+    // Best member will reduce wanted level
     if(membersAndSkills.length == 0) return;
     await ns.gang.setMemberTask(membersAndSkills[0].name, "Ethical Hacking");
     
-    if(membersAndSkills.length == 1) return;
-    await ns.gang.setMemberTask(membersAndSkills[1].name, "Train Combat");
+    // Don't continue if wanted level is too high, just
+    // wait for it to come down a bit before we experiment
+    var tooHigh = await wantedLevelHigh();
+    var growing = await wantedLevelGrowing();
+    if(tooHigh && !growing) return;
     
-    await forEachAsync(membersAndSkills.slice(2), async function(i, member){
+    // Experiment with and assign money-making tasks
+    var remainingMembers = membersAndSkills.slice(1);
+    await forEachAsync(remainingMembers, async function(i, member){
+      await ns.sleep(1200);
       await optimiseMoneyTask(member.name);
     });
     
@@ -189,6 +282,7 @@ function Assignment(ns){
 export async function main(ns){
   
   var routines = [
+    Hiring(ns),
     Ascension(ns),
     Equipment(ns),
     Assignment(ns)

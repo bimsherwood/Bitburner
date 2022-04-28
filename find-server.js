@@ -68,7 +68,8 @@ export function ServerFinder(ns, options){
           3 *
           serverProfile.minSecurity *
           serverProfile.minSecurity);
-        return hackLevel >= hackRequirement;
+        return hackLevel >= hackRequirement ||
+          serverProfile.minSecurity == 1;
       });
     }
     

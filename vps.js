@@ -19,12 +19,17 @@ export function getVpsNames(){
     "vps-eevee",
     "vps-ekans",
     "vps-gengar",
+    "vps-latios",
     "vps-marowak",
     "vps-meowth",
+    "vps-nuzleaf",
     "vps-pikachu",
+    "vps-poochyena",
     "vps-rattata",
     "vps-scorbunny",
-    "vps-vulpix"
+    "vps-treecko",
+    "vps-vulpix",
+    "vps-zigzagoon"
   ];
 }
 
@@ -79,8 +84,8 @@ function Vps(ns, options){
       }
     }
     var boughtServerName = await ns.purchaseServer(hostname, size);
-    if(boughtServerName != hostname){
-      await trace("Failed to buy server " + hostname);
+    if(boughtServerName == ""){
+      await trace("Failed to purchase server " + hostname);
       return false;
     }
     await ns.sleep(1000);

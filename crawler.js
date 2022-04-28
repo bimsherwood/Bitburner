@@ -42,7 +42,7 @@ export function Crawler(ns, options){
   }
   
   async function crawl(){
-    discoveredHosts.push(rootHost);
+    discoveredHosts = [rootHost];
     while(await step()){
       await ns.sleep(10);
     }

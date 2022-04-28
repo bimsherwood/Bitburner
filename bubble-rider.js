@@ -1,6 +1,7 @@
 /** @param {NS} ns **/
 
-import { safeLoop, forEach, forEachAsync } from "./utils.js";
+import { numberWithMagnitude } from "format.js";
+import { forEach, forEachAsync } from "utils.js";
 
 var transactionCost = 100*1000;
 var packetSize = 1000*1000*1000;
@@ -49,8 +50,9 @@ async function sellRisky(ns, profiles){
       ns.tprint(
         "Selling ",
         e.symbol,
-        " ",
-        ns.nFormat(e.shares * e.bidPrice, '($ 0.00 a)'));
+        " ($ ",
+        numberWithMagnitude(e.shares * e.bidPrice, 2),
+        ")");
       await ns.stock.sell(e.symbol, e.shares);
     }
   });
@@ -69,8 +71,9 @@ async function buyBest(ns, profiles){
       ns.tprint(
         "Buying ",
         bestStock.symbol,
-        " ",
-        ns.nFormat(shares * bestStock.askPrice, '($ 0.00 a)'));
+        " ($ ",
+        numberWithMagnitude(shares * bestStock.askPrice, 2),
+        ")");
       await ns.stock.buy(bestStock.symbol, shares);
     }
   }
@@ -83,7 +86,11 @@ async function printNetWorth(ns, analysis){
       total += e.shares * e.bidPrice;
     }
   });
-  ns.tprint("Current value: ", ns.nFormat(total, '($ 0.00 a)'));
+  ns.tprint(
+    "Current value: ",
+    " ($ ",
+    numberWithMagnitude(total, 2),
+    ")");
 }
 
 export async function main(ns){
