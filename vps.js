@@ -1,8 +1,5 @@
 /** @param {NS} ns **/
 
-import { Crawler } from "crawler.js"
-import { forEachAsync } from "utils.js"
-
 export function getVpsNames(){
   return [
     "vps-absol",
@@ -166,21 +163,21 @@ export function VpsManager(ns, options){
     
   async function quoteAll(proposals){
     var quote = 0;
-    await forEachAsync(proposals, async function(i, e){
-      quote += await e.upgrade.quote();
-    });
+    for(var i in proposals){
+      quote += await proposals[i].upgrade.quote();
+    }
     return quote;
   }
   
   async function currentPortfolio(){
     var serverStates = [];
-    await forEachAsync(servers, async function(i, e){
+    for(var i in servers){
       serverStates.push({
-        server: e,
+        server: servers[i],
         levelIncrease: 0,
-        upgrade: await e.currentState()
+        upgrade: await servers[i].currentState()
       });
-    });
+    }
     return serverStates;
   }
   
@@ -224,17 +221,20 @@ export function VpsManager(ns, options){
   }
   
   async function traceUpgrade(proposals){
-    await forEachAsync(proposals, async function(i, e){
-      if(e.levelIncrease > 0){
-        await trace(e.server.hostname + ": +" + e.levelIncrease);
+    for(var i in proposals){
+      if(proposals[i].levelIncrease > 0){
+        await trace(
+          proposals[i].server.hostname
+          + ": +"
+          + proposals[i].levelIncrease);
       }
-    });
+    }
   }
   
   async function executeUpgrade(proposals){
-    await forEachAsync(proposals, async function(i, e){
-      await e.upgrade.install();
-    });
+    for(var i in proposals){
+      await proposals[i].upgrade.install();
+    }
   }
   
   async function upgrade(){
@@ -259,10 +259,6 @@ function printHelp(ns){
 
 export async function main(ns) {
   
-  var crawler = new Crawler(ns, {
-    resultLimit: 1000,
-    rootHost: "home"
-  });
   var managerOptions = {
     hostnames: getVpsNames(),
     decommission: async function(hostname){

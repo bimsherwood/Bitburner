@@ -1,7 +1,5 @@
 /** @param {NS} ns **/
 
-import { forEachAsync } from "utils.js";
-
 function defaultOptions(){
   return {
     maxNodes: 32,
