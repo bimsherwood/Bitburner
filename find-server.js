@@ -83,11 +83,11 @@ export function ServerFinder(ns, options){
     
   }
   
-  function scoreTarget(profile){
-    var moneyScore = profile.maxMoney;
-    var securityScore = profile.minSecurity;
-    // Rank by money, then break ties with security
-    return moneyScore * 100 + securityScore;
+  function scoreTarget(profile){  
+    var moneyScore = Math.log10(profile.maxMoney);
+    var securityScore = 100 - profile.minSecurity;
+    // Rank by min security, but bonus points for more money
+    return securityScore + moneyScore;
   }
   
   function scoreHost(profile){
