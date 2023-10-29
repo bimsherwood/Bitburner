@@ -48,6 +48,8 @@ export function Reach(ns, options){
     
     var schedule = {};
     if(bestTargets.length > 0){
+      bestHosts.sort();
+      bestTargets.sort();
       forEach(bestHosts, function(i, host){
         var correspondingTargetIndex = i % bestTargets.length;
         var correspondingTarget = bestTargets[correspondingTargetIndex];
@@ -90,7 +92,7 @@ export function Reach(ns, options){
     // Schedule hosts and targets
     var schedule = await generateSchedule(servers);
     for(var server in schedule){
-      var newTarget = schedule[server];
+      var newTarget = schedule[server] || null;
       var currentTarget = getCurrentServerTarget(server);
       var reinstall =
         newTarget != currentTarget ||

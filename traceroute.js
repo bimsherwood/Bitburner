@@ -105,6 +105,8 @@ export async function main(ns){
   } else {
     connectMode = false;
   }
+
+  connectMode = true; // Because fuck it
   
   var matchingRoutes;
   if(ns.args.length == 0){
