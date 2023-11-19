@@ -53,7 +53,7 @@ async function sellRisky(ns, profiles){
         " ($ ",
         numberWithMagnitude(e.shares * e.bidPrice, 2),
         ")");
-      await ns.stock.sell(e.symbol, e.shares);
+      await ns.stock.sellStock(e.symbol, e.shares);
     }
   });
 }
@@ -74,9 +74,15 @@ async function buyBest(ns, profiles){
         " ($ ",
         numberWithMagnitude(shares * bestStock.askPrice, 2),
         ")");
-      await ns.stock.buy(bestStock.symbol, shares);
+      await ns.stock.buyStock(bestStock.symbol, shares);
     }
   }
+}
+
+
+async function trade(ns, profiles){
+    await sellRisky(ns, profiles);
+    await buyBest(ns, profiles);
 }
 
 async function printNetWorth(ns, analysis){
@@ -108,6 +114,8 @@ export async function main(ns){
     await loop(buyBest);
   } else if(ns.args.length == 1 && ns.args[0] == "sell"){
     await loop(sellRisky);
+  } else if(ns.args.length == 1 && ns.args[0] == "trade"){
+    await loop(trade);
   } else if(ns.args.length == 1 && ns.args[0] == "show-value"){
     var analysis = await analyseMarket(ns);
     await printNetWorth(ns, analysis);
@@ -116,6 +124,7 @@ export async function main(ns){
     ns.tprint("Usage:");
     ns.tprint("  bubble-rider.js buy");
     ns.tprint("  bubble-rider.js sell");
+    ns.tprint("  bubble-rider.js trade");
     ns.tprint("  bubble-rider.js show-value");
     return;
   }

@@ -279,7 +279,7 @@ function Biotic (ns, options){
   var bioticState = getBioticState();
   var cellPool = bioticState.cellPool;
   
-  var upgradePeriod = 5*60*1000;
+  var upgradePeriod = 60*1000;
   
   async function rootServers(){
     var allServers = await crawler.crawl();
@@ -305,7 +305,6 @@ function Biotic (ns, options){
   }
   
   async function allocateWork(){
-    var targets;
     if(!spam){
       var allServers = await crawler.crawl();
       var targetFinder = new ServerFinder(ns, {
@@ -347,7 +346,8 @@ export async function main(ns) {
   var targetLimit;
   if(ns.args.length > 0){
     targetLimit = ns.args[0];
-  } else {
+  }
+  if (!targetLimit) {
     targetLimit = 1;
   }
   
