@@ -79,10 +79,11 @@ async function buyBest(ns, profiles){
   }
 }
 
-
 async function trade(ns, profiles){
+  for(var i = 0; i < 50; i++){ // 5 minutes
     await sellRisky(ns, profiles);
-    await buyBest(ns, profiles);
+  }
+  await buyBest(ns, profiles);
 }
 
 async function printNetWorth(ns, analysis){
